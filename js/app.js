@@ -45,6 +45,7 @@
         .map((entry) => entry.path)
         .filter((path) => !prefix || path === source.rootPath || path.startsWith(prefix))
         .map((path) => (prefix && path.startsWith(prefix) ? path.slice(prefix.length) : path))
+        .filter((path) => !path.split("/").slice(0, -1).some((segment) => segment.startsWith(".")))
         .filter((path) => isMarkdown(path))
         .filter(Boolean);
 
