@@ -49,6 +49,15 @@
         .filter(Boolean);
 
       state.files = files.sort((a, b) => a.localeCompare(b));
+      state.collapsedPaths.clear();
+      for (const filePath of state.files) {
+        const parts = filePath.split("/");
+        let current = "";
+        for (let i = 0; i < parts.length - 1; i += 1) {
+          current = current ? `${current}/${parts[i]}` : parts[i];
+          state.collapsedPaths.add(current);
+        }
+      }
       tree.renderTree(viewer.openFile);
 
       if (truncated) {
