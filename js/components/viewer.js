@@ -1,6 +1,7 @@
-import { dirname, escapeHtml, isMarkdown, normalizePath, splitRef } from "../core/utils.js";
+window.createViewerComponent = function createViewerComponent(options) {
+  const { state, viewerEl, viewerTitleEl, metaEl, setStatus, toRawUrl, renderTree } = options;
+  const { dirname, escapeHtml, isMarkdown, normalizePath, splitRef } = window.PortalUtils;
 
-export function createViewerComponent({ state, viewerEl, viewerTitleEl, metaEl, setStatus, toRawUrl, renderTree }) {
   function getRepoPathForVisiblePath(path) {
     if (!state.source || !state.source.rootPath) {
       return path;
@@ -114,7 +115,7 @@ export function createViewerComponent({ state, viewerEl, viewerTitleEl, metaEl, 
 
       const text = await response.text();
 
-      viewerEl.innerHTML = globalThis.marked.parse(text);
+      viewerEl.innerHTML = window.marked.parse(text);
       processRenderedContent(path, openFile);
       scrollToAnchor(anchor || state.initialAnchor);
       if (anchor || state.initialAnchor) {
@@ -135,4 +136,4 @@ export function createViewerComponent({ state, viewerEl, viewerTitleEl, metaEl, 
   return {
     openFile,
   };
-}
+};
