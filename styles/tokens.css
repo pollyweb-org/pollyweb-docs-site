@@ -1,20 +1,25 @@
 :root {
-  --bg: #040813;
-  --bg-2: #0a1330;
-  --panel: rgba(9, 16, 34, 0.84);
-  --panel-solid: #0c1430;
-  --accent: #59a5ff;
-  --accent-2: #7ec8ff;
-  --accent-soft: rgba(89, 165, 255, 0.18);
-  --text: #e6eeff;
-  --muted: #9daed1;
-  --border: rgba(126, 166, 232, 0.24);
-  --tree-hover: rgba(89, 165, 255, 0.12);
-  --code-bg: #02050c;
+  --bg: #111317;
+  --bg-2: #171b21;
+  --panel: rgba(28, 32, 40, 0.9);
+  --panel-solid: #202530;
+  --accent: #7d8fa8;
+  --accent-2: #9aa8bb;
+  --accent-soft: rgba(154, 168, 187, 0.16);
+  --text: #e4e8ef;
+  --muted: #adb7c7;
+  --border: rgba(164, 176, 194, 0.24);
+  --tree-hover: rgba(164, 176, 194, 0.12);
+  --code-bg: #151920;
 }
 
 * {
   box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
 }
 
 body {
@@ -22,11 +27,12 @@ body {
   font-family: "DM Sans", "Avenir Next", "Segoe UI", sans-serif;
   color: var(--text);
   background:
-    radial-gradient(circle at 18% 10%, rgba(64, 118, 214, 0.35) 0%, transparent 34%),
-    radial-gradient(circle at 84% 8%, rgba(76, 164, 255, 0.2) 0%, transparent 24%),
-    radial-gradient(circle at 48% 95%, rgba(53, 94, 196, 0.28) 0%, transparent 40%),
+    radial-gradient(circle at 18% 10%, rgba(136, 149, 170, 0.2) 0%, transparent 34%),
+    radial-gradient(circle at 84% 8%, rgba(103, 116, 137, 0.12) 0%, transparent 24%),
+    radial-gradient(circle at 48% 95%, rgba(93, 102, 120, 0.18) 0%, transparent 40%),
     var(--bg);
   min-height: 100vh;
+  overflow: hidden;
 }
 
 .hint {

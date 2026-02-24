@@ -1,7 +1,25 @@
 .tree {
+  flex: 1;
+  min-height: 0;
   padding: 8px;
   overflow: auto;
   font-size: 14px;
+}
+
+.tree-search {
+  width: calc(100% - 16px);
+  margin: 8px 8px 4px;
+  padding: 7px 9px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #111823;
+  color: inherit;
+  font: inherit;
+}
+
+.tree-search:focus {
+  outline: 1px solid var(--accent);
+  outline-offset: 0;
 }
 
 .tree ul {
@@ -32,7 +50,7 @@
 
 .tree button.active {
   background: var(--accent-soft);
-  color: #b8d9ff;
+  color: #d0d8e3;
   font-weight: 600;
 }
 
@@ -46,14 +64,14 @@
   width: 16px;
   height: 16px;
   flex: 0 0 16px;
-  color: #9fb2d4;
+  color: #a4b0c2;
 }
 
 .tree-caret {
   width: 10px;
   height: 10px;
   flex: 0 0 10px;
-  color: #89a0c5;
+  color: #96a4b8;
   transition: transform 120ms ease;
 }
 

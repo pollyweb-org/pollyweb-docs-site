@@ -2,6 +2,64 @@ window.createViewerComponent = function createViewerComponent(options) {
   const { state, viewerEl, viewerTitleEl, metaEl, setStatus, toRawUrl, renderTree } = options;
   const { dirname, escapeHtml, isMarkdown, normalizePath, splitRef } = window.PortalUtils;
 
+  function findFileForDirectory(dirPath) {
+    const prefix = dirPath ? `${dirPath}/` : "";
+    const candidates = state.files.filter((filePath) => !prefix || filePath.startsWith(prefix));
+    if (!candidates.length) return null;
+
+    const readmePath = dirPath ? `${dirPath}/readme.md` : "readme.md";
+    const directReadme = candidates.find((filePath) => filePath.toLowerCase() === readmePath);
+    if (directReadme) return directReadme;
+
+    return candidates[0];
+  }
+
+  function renderBreadcrumb(path, onOpenFile) {
+    viewerTitleEl.textContent = "";
+    const parts = path.split("/");
+    const crumbs = [];
+
+    crumbs.push({
+      label: "home",
+      targetPath: findFileForDirectory(""),
+    });
+
+    for (let i = 0; i < parts.length; i += 1) {
+      const currentPath = parts.slice(0, i + 1).join("/");
+      const isFile = i === parts.length - 1;
+      crumbs.push({
+        label: parts[i],
+        targetPath: isFile ? currentPath : findFileForDirectory(currentPath),
+      });
+    }
+
+    crumbs.forEach((crumb, idx) => {
+      if (idx > 0) {
+        const separator = document.createElement("span");
+        separator.className = "breadcrumb-separator";
+        separator.textContent = "/";
+        viewerTitleEl.appendChild(separator);
+      }
+
+      if (crumb.targetPath) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "breadcrumb-btn";
+        button.textContent = crumb.label;
+        if (crumb.targetPath === path) {
+          button.classList.add("active");
+        }
+        button.addEventListener("click", () => onOpenFile(crumb.targetPath));
+        viewerTitleEl.appendChild(button);
+      } else {
+        const text = document.createElement("span");
+        text.className = "breadcrumb-text";
+        text.textContent = crumb.label;
+        viewerTitleEl.appendChild(text);
+      }
+    });
+  }
+
   function getRepoPathForVisiblePath(path) {
     if (!state.source || !state.source.rootPath) {
       return path;
@@ -105,7 +163,7 @@ window.createViewerComponent = function createViewerComponent(options) {
 
     const rawUrl = toRawUrl(source, path);
     setStatus(`Loading ${path} ...`);
-    viewerTitleEl.textContent = path;
+    renderBreadcrumb(path, openFile);
 
     try {
       const response = await fetch(rawUrl);

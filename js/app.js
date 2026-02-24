@@ -33,6 +33,8 @@
       state.source = source;
       state.files = [];
       state.activePath = null;
+      state.treeSearch = "";
+      dom.treeSearchEl.value = "";
       dom.viewerEl.innerHTML = '<p class="hint">Loading document tree...</p>';
       dom.metaEl.textContent = "No file selected.";
       setStatus(`Fetching tree for ${source.owner}/${source.repo}@${source.branch} ...`);
@@ -84,6 +86,10 @@
   }
 
   dom.loadBtnEl.addEventListener("click", loadRepository);
+  dom.treeSearchEl.addEventListener("input", (event) => {
+    state.treeSearch = event.target.value;
+    tree.renderTree(viewer.openFile);
+  });
   dom.repoUrlEl.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
       loadRepository();

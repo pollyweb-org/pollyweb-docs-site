@@ -1,6 +1,7 @@
 window.PortalDom = {
   statusEl: document.getElementById("status"),
   treeEl: document.getElementById("tree"),
+  treeSearchEl: document.getElementById("treeSearch"),
   viewerEl: document.getElementById("viewer"),
   viewerTitleEl: document.getElementById("viewerTitle"),
   metaEl: document.getElementById("meta"),

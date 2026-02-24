@@ -56,7 +56,7 @@ window.createTreeComponent = function createTreeComponent(state, treeEl) {
       const isDir = node[name] !== null;
 
       if (isDir) {
-        const isCollapsed = state.collapsedPaths.has(fullPath);
+        const isCollapsed = !state.treeSearch && state.collapsedPaths.has(fullPath);
         const dirBtn = document.createElement("button");
         dirBtn.className = "tree-btn";
         dirBtn.type = "button";
@@ -120,7 +120,17 @@ window.createTreeComponent = function createTreeComponent(state, treeEl) {
       return;
     }
 
-    const structure = buildNodes(state.files);
+    const query = state.treeSearch.trim().toLowerCase();
+    const visibleFiles = query
+      ? state.files.filter((path) => path.toLowerCase().includes(query))
+      : state.files;
+
+    if (!visibleFiles.length) {
+      treeEl.innerHTML = '<p class="hint">No documents match your search.</p>';
+      return;
+    }
+
+    const structure = buildNodes(visibleFiles);
     treeEl.appendChild(renderTreeNode(structure, "", onOpenFile));
   }
 

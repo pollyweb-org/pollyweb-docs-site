@@ -17,7 +17,7 @@
         <input
           id="repoUrl"
           type="url"
-          value="https://github.com/aws-solutions/cost-optimizer-for-amazon-workspaces"
+          value="https://github.com/docker/docs"
           placeholder="https://github.com/owner/repo or /owner/repo/tree/branch/path"
         />
         <button id="loadBtn">Load Portal</button>
@@ -27,7 +27,13 @@
 
     <div class="workspace">
       <section class="panel">
-        <h2>Document Tree</h2>
+        <input
+          id="treeSearch"
+          class="tree-search"
+          type="search"
+          placeholder="Search documents..."
+          autocomplete="off"
+        />
         <div id="tree" class="tree"></div>
       </section>
 
