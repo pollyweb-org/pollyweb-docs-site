@@ -1,0 +1,36 @@
+:root {
+  --bg: #040813;
+  --bg-2: #0a1330;
+  --panel: rgba(9, 16, 34, 0.84);
+  --panel-solid: #0c1430;
+  --accent: #59a5ff;
+  --accent-2: #7ec8ff;
+  --accent-soft: rgba(89, 165, 255, 0.18);
+  --text: #e6eeff;
+  --muted: #9daed1;
+  --border: rgba(126, 166, 232, 0.24);
+  --tree-hover: rgba(89, 165, 255, 0.12);
+  --code-bg: #02050c;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "DM Sans", "Avenir Next", "Segoe UI", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 18% 10%, rgba(64, 118, 214, 0.35) 0%, transparent 34%),
+    radial-gradient(circle at 84% 8%, rgba(76, 164, 255, 0.2) 0%, transparent 24%),
+    radial-gradient(circle at 48% 95%, rgba(53, 94, 196, 0.28) 0%, transparent 40%),
+    var(--bg);
+  min-height: 100vh;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}

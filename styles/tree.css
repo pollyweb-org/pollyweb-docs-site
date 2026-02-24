@@ -1,0 +1,62 @@
+.tree {
+  padding: 8px;
+  overflow: auto;
+  font-size: 14px;
+}
+
+.tree ul {
+  list-style: none;
+  margin: 0;
+  padding-left: 16px;
+}
+
+.tree li {
+  margin: 2px 0;
+}
+
+.tree button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 4px 6px;
+  width: 100%;
+  text-align: left;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.tree button:hover {
+  background: var(--tree-hover);
+}
+
+.tree button.active {
+  background: var(--accent-soft);
+  color: #b8d9ff;
+  font-weight: 600;
+}
+
+.tree-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tree-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  color: #9fb2d4;
+}
+
+.tree-caret {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 10px;
+  color: #89a0c5;
+  transition: transform 120ms ease;
+}
+
+.tree-caret.collapsed {
+  transform: rotate(-90deg);
+}

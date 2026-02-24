@@ -1,0 +1,72 @@
+.viewer {
+  overflow: auto;
+  padding: 18px;
+}
+
+.viewer pre {
+  background: var(--code-bg);
+  color: #d9e7fa;
+  border-radius: 10px;
+  padding: 14px;
+  overflow: auto;
+  font-size: 13px;
+  line-height: 1.5;
+  border: 1px solid rgba(88, 151, 255, 0.2);
+}
+
+.viewer code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.viewer img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.viewer table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 14px 0;
+  font-size: 14px;
+}
+
+.viewer th,
+.viewer td {
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.viewer thead th {
+  background: rgba(89, 165, 255, 0.14);
+}
+
+.viewer tbody tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.viewer a {
+  color: var(--accent-2);
+}
+
+.viewer a:hover {
+  color: #aad7ff;
+}
+
+.viewer blockquote {
+  margin: 14px 0;
+  padding: 10px 14px;
+  border-left: 3px solid var(--accent);
+  background: rgba(89, 165, 255, 0.1);
+  border-radius: 8px;
+}
+
+.viewer hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+}
