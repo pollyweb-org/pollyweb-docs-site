@@ -39,6 +39,13 @@
   flex: 1 1 auto;
   min-width: 0;
   border-left: 0;
+  position: relative;
+}
+
+.content-layout {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
 }
 
 .panel-divider {
@@ -80,7 +87,7 @@ body.resizing-panels * {
 
 .panel h2 {
   margin: 0;
-  padding: 12px 14px;
+  padding: 12px 220px 12px 14px;
   font-size: 14px;
   color: var(--muted);
   border-bottom: 1px solid var(--border);
@@ -90,11 +97,15 @@ body.resizing-panels * {
 }
 
 .meta {
-  padding: 8px 14px;
-  border-top: 1px solid var(--border);
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  padding: 0;
+  border: 0;
   font-size: 12px;
   color: var(--muted);
-  background: var(--panel-solid);
+  background: transparent;
+  z-index: 3;
 }
 
 .meta a {
@@ -123,6 +134,14 @@ body.resizing-panels * {
 
   .content-panel {
     border-left: 1px solid var(--border);
+  }
+
+  .content-layout {
+    display: block;
+  }
+
+  .panel h2 {
+    padding-right: 160px;
   }
 
   .panel-divider {

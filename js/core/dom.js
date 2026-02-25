@@ -4,6 +4,7 @@ window.PortalDom = {
   treeSearchEl: document.getElementById("treeSearch"),
   viewerEl: document.getElementById("viewer"),
   viewerTitleEl: document.getElementById("viewerTitle"),
+  tocNavEl: document.getElementById("tocNav"),
   metaEl: document.getElementById("meta"),
 };
 
