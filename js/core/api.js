@@ -125,7 +125,16 @@ function parseApiErrorMessage(body, fallback = "Request failed") {
   }
 }
 
+function isForcedPageErrorTestMode() {
+  const testMode = new URLSearchParams(window.location.search).get("test") || "";
+  return testMode === "force-page-error";
+}
+
 async function fetchPageViaPollywebApi(source, path) {
+  if (isForcedPageErrorTestMode()) {
+    throw new Error("Docs API page error (unknown): Failed to fetch (forced test mode).");
+  }
+
   const fetchCached = getCache();
   const params = new URLSearchParams();
   params.set("owner", source.owner);

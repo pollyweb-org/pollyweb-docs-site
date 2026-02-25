@@ -1,5 +1,6 @@
 (function bootstrapPortal() {
   const STATIC_SOURCE_URL = "https://github.com/pollyweb-org/pollyweb-docs";
+  const REPO_HOME_URL = "https://github.com/pollyweb-org/pollyweb-docs-site";
   const state = window.PortalState;
   const dom = window.PortalDom;
   const { escapeHtml, isMarkdown } = window.PortalUtils;
@@ -8,6 +9,7 @@
   const workspaceEl = document.getElementById("workspace");
   const treePanelEl = document.getElementById("treePanel");
   const dividerEl = document.getElementById("panelDivider");
+  const repoHomeBtnEl = document.getElementById("repoHomeBtn");
   let isTreePanelCollapsed = false;
   let isContentExpanded = false;
 
@@ -42,6 +44,10 @@
     '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 2.75H2.75V6M10 2.75h3.25V6M6 13.25H2.75V10M10 13.25h3.25V10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const RESTORE_CONTENT_ICON =
     '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 6h3V3M9.5 3h3v3M3.5 10h3v3M9.5 13h3v-3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  if (repoHomeBtnEl) {
+    repoHomeBtnEl.href = REPO_HOME_URL;
+  }
 
   function setTreePanelCollapsed(collapsed) {
     if (!workspaceEl) return;
@@ -136,6 +142,15 @@
     );
   }
 
+  function getTestMode() {
+    return new URLSearchParams(window.location.search).get("test") || "";
+  }
+
+  function getTestPage() {
+    const testMode = getTestMode();
+    return testMode === "load-failure" ? "__test__/missing-file.md" : "";
+  }
+
   function sleep(ms) {
     return new Promise((resolve) => {
       window.setTimeout(resolve, ms);
@@ -215,11 +230,34 @@
       return;
     }
 
-    dom.viewerEl.innerHTML = `<p class="hint">${escapeHtml(error.message)}</p>`;
+    const safeMessage = escapeHtml(error && error.message ? String(error.message) : "Unknown error.");
+    dom.viewerEl.innerHTML = `
+      <section class="viewer-error-state" role="alert" aria-live="assertive">
+        <div class="viewer-error-head">
+          <span class="viewer-error-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2zm0 14.2a1.2 1.2 0 1 1-1.2 1.2A1.2 1.2 0 0 1 12 16.2zm1-3.7h-2V6.8h2z" fill="currentColor"/></svg>
+          </span>
+          <p class="viewer-error-kicker">Connection Problem</p>
+          <h3>Couldn&rsquo;t load the docs content</h3>
+          <p class="viewer-error-copy">The docs backend did not respond successfully. Reload to try again.</p>
+        </div>
+        <div class="viewer-error-actions">
+          <a class="viewer-error-btn primary" href="${window.location.href}">Reload</a>
+        </div>
+        <details class="viewer-error-details">
+          <summary>Technical details</summary>
+          <pre>${safeMessage}</pre>
+        </details>
+      </section>
+    `;
     setStatus(error.message, true);
   }
 
   async function loadSourceWithRetry() {
+    if (getTestMode() === "force-source-error") {
+      throw new Error("Source API error (unknown): Failed to fetch (forced test mode).");
+    }
+
     const parsed = window.PortalApi.parseSourceUrl(STATIC_SOURCE_URL);
     const owner = parsed.owner;
     const repo = parsed.repo;
@@ -260,7 +298,7 @@
       state.activePath = null;
       state.treeSearch = "";
       dom.treeSearchEl.value = "";
-      dom.metaEl.textContent = "No file selected.";
+      dom.metaEl.textContent = "";
       const { tree: fullTree, truncated } = treeResult;
       const prefix = source.rootPath ? `${source.rootPath}/` : "";
 
@@ -304,7 +342,10 @@
 
       const initialDoc = state.initialPage && state.files.includes(state.initialPage) ? state.initialPage : "";
 
-      if (initialDoc) {
+      const testDoc = getTestPage();
+      if (testDoc) {
+        viewer.openFile(testDoc);
+      } else if (initialDoc) {
         viewer.openFile(initialDoc, state.initialAnchor);
       } else if (firstDoc) {
         viewer.openFile(firstDoc);
