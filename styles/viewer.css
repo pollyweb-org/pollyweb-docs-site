@@ -451,6 +451,11 @@
   color: var(--yaml-value);
 }
 
+.viewer pre code.language-yaml .yaml-comment,
+.viewer pre code.language-yml .yaml-comment {
+  color: var(--yaml-comment);
+}
+
 .viewer img {
   display: block;
   max-width: 100%;

@@ -596,6 +596,10 @@ window.createViewerComponent = function createViewerComponent(options) {
       const lines = source.split("\n");
       const highlighted = lines
         .map((line) => {
+          if (/^\s*#/.test(line)) {
+            return `<span class="yaml-comment">${escapeHtml(line)}</span>`;
+          }
+
           const keyValueMatch = line.match(/^(\s*-?\s*)([^:#\n][^:\n]*)(\s*:\s*)(.*)$/);
           if (!keyValueMatch) {
             return escapeHtml(line);
