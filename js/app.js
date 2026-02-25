@@ -82,6 +82,15 @@
     });
   }
 
+  function getDefaultDocPath() {
+    return (
+      state.files.find((p) => p.toLowerCase() === "readme.md") ||
+      state.files.find((p) => p.toLowerCase().endsWith("/readme.md")) ||
+      state.files[0] ||
+      ""
+    );
+  }
+
   async function loadRepository() {
     try {
       const source = await resolveSource(STATIC_SOURCE_URL);
@@ -133,10 +142,7 @@
         setStatus(`Loaded ${state.files.length} Markdown files.`);
       }
 
-      const firstDoc =
-        state.files.find((p) => p.toLowerCase() === "readme.md") ||
-        state.files.find((p) => p.toLowerCase().endsWith("/readme.md")) ||
-        state.files[0];
+      const firstDoc = getDefaultDocPath();
 
       const initialDoc = state.initialPage && state.files.includes(state.initialPage) ? state.initialPage : "";
 
@@ -156,6 +162,19 @@
   dom.treeSearchEl.addEventListener("input", (event) => {
     state.treeSearch = event.target.value;
     tree.renderTree(viewer.openFile);
+  });
+
+  window.addEventListener("popstate", () => {
+    if (!state.files.length) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const page = params.get("page") || "";
+    const anchor = decodeURIComponent(window.location.hash.replace(/^#/, ""));
+    const targetPath = page && state.files.includes(page) ? page : getDefaultDocPath();
+
+    if (!targetPath) return;
+    if (targetPath === state.activePath && !anchor) return;
+    viewer.openFile(targetPath, anchor, { historyMode: "skip" });
   });
 
   initPanelResize();

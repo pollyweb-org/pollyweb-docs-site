@@ -294,7 +294,8 @@ window.createViewerComponent = function createViewerComponent(options) {
     }
   }
 
-  function updateLocation(path, anchor = "") {
+  function updateLocation(path, anchor = "", options = {}) {
+    const { historyMode = "replace" } = options;
     const url = new URL(window.location.href);
     if (path) {
       url.searchParams.set("page", path);
@@ -302,7 +303,13 @@ window.createViewerComponent = function createViewerComponent(options) {
       url.searchParams.delete("page");
     }
     url.hash = anchor ? `#${encodeURIComponent(anchor)}` : "";
-    history.replaceState(null, "", url);
+    if (historyMode === "push") {
+      history.pushState(null, "", url);
+      return;
+    }
+    if (historyMode === "replace") {
+      history.replaceState(null, "", url);
+    }
   }
 
   function processRenderedContent(currentVisiblePath, onOpenFile) {
@@ -367,7 +374,7 @@ window.createViewerComponent = function createViewerComponent(options) {
           link.href = `?page=${encodeURIComponent(docPath)}${suffix}`;
           link.addEventListener("click", (event) => {
             event.preventDefault();
-            onOpenFile(docPath, anchor);
+            onOpenFile(docPath, anchor, { historyMode: "push" });
           });
           continue;
         }
@@ -391,7 +398,7 @@ window.createViewerComponent = function createViewerComponent(options) {
         link.addEventListener("click", (event) => {
           event.preventDefault();
           const anchor = suffix.startsWith("#") ? decodeURIComponent(suffix.slice(1)) : "";
-          onOpenFile(docPath, anchor);
+          onOpenFile(docPath, anchor, { historyMode: "push" });
         });
       } else {
         const resolvedUrl = `${toRawUrl(source, visiblePath)}${suffix}`;
@@ -406,7 +413,8 @@ window.createViewerComponent = function createViewerComponent(options) {
     }
   }
 
-  async function openFile(path, anchor = "") {
+  async function openFile(path, anchor = "", options = {}) {
+    const { historyMode = "replace" } = options;
     state.activePath = path;
     renderTree(openFile);
 
@@ -414,6 +422,11 @@ window.createViewerComponent = function createViewerComponent(options) {
     if (!source) return;
 
     const rawUrl = toRawUrl(source, path);
+    const repoPath = getRepoPathForVisiblePath(path)
+      .split("/")
+      .map((segment) => encodeURIComponent(segment))
+      .join("/");
+    const editUrl = `https://github.com/${source.owner}/${source.repo}/edit/${encodeURIComponent(source.branch)}/${repoPath}`;
     setStatus(`Loading ${path} ...`);
     renderBreadcrumb(path, openFile);
 
@@ -429,10 +442,10 @@ window.createViewerComponent = function createViewerComponent(options) {
       processRenderedContent(path, openFile);
       scrollToAnchor(anchor || state.initialAnchor);
       const activeAnchor = anchor || state.initialAnchor;
-      updateLocation(path, activeAnchor);
+      updateLocation(path, activeAnchor, { historyMode });
       state.initialAnchor = "";
 
-      metaEl.innerHTML = `Source: <a href="${rawUrl}" target="_blank" rel="noreferrer">raw file</a>`;
+      metaEl.innerHTML = `<a href="${editUrl}" target="_blank" rel="noreferrer">Source</a>`;
       setStatus(`Loaded ${path}`);
     } catch (err) {
       viewerEl.innerHTML = `<p class="hint">${escapeHtml(err.message)}</p>`;
