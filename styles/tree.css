@@ -8,8 +8,10 @@
 
 .tree-search {
   width: calc(100% - 16px);
+  height: 30px;
   margin: 8px 8px 4px;
   padding: 7px 9px;
+  box-sizing: border-box;
   border-radius: 8px;
   border: 1px solid var(--line);
   background: var(--control-bg);
