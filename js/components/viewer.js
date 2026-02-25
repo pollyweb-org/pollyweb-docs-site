@@ -435,7 +435,19 @@ window.createViewerComponent = function createViewerComponent(options) {
   }
 
   function scrollToAnchor(anchor) {
-    if (!anchor) return;
+    const scrollViewerToTop = () => {
+      if (typeof viewerEl.scrollTo === "function") {
+        viewerEl.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      } else {
+        viewerEl.scrollTop = 0;
+        viewerEl.scrollLeft = 0;
+      }
+    };
+
+    if (!anchor) {
+      scrollViewerToTop();
+      return;
+    }
     const targetById = document.getElementById(anchor);
     const namedAnchors = viewerEl.querySelectorAll("a[name]");
     let targetByName = null;
@@ -448,7 +460,9 @@ window.createViewerComponent = function createViewerComponent(options) {
     const target = targetById && viewerEl.contains(targetById) ? targetById : targetByName;
     if (target) {
       target.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
     }
+    scrollViewerToTop();
   }
 
   function toSlug(text) {
@@ -589,6 +603,16 @@ window.createViewerComponent = function createViewerComponent(options) {
     }
   }
 
+  function suppressTableBottomBorderBeforeRule(rootEl) {
+    const rules = rootEl.querySelectorAll("hr");
+    for (const rule of rules) {
+      const previous = rule.previousElementSibling;
+      if (previous && previous.tagName === "TABLE") {
+        previous.classList.add("table-no-bottom-border");
+      }
+    }
+  }
+
   function highlightYamlCodeBlocks(rootEl) {
     const yamlBlocks = rootEl.querySelectorAll("pre > code.language-yaml, pre > code.language-yml");
     for (const block of yamlBlocks) {
@@ -628,6 +652,7 @@ window.createViewerComponent = function createViewerComponent(options) {
     if (!state.source) return;
     const { source } = state;
     trimTrailingEmptyTableRows(viewerEl);
+    suppressTableBottomBorderBeforeRule(viewerEl);
     highlightYamlCodeBlocks(viewerEl);
 
     const images = viewerEl.querySelectorAll("img[src]");
