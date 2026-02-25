@@ -8,6 +8,7 @@ window.PortalDom = {
 };
 
 window.setPortalStatus = function setPortalStatus(message, isError = false) {
+  if (!window.PortalDom.statusEl) return;
   window.PortalDom.statusEl.textContent = message;
   window.PortalDom.statusEl.style.color = isError ? "#b00020" : "var(--muted)";
 };
