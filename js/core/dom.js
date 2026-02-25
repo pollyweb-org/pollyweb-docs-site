@@ -5,8 +5,6 @@ window.PortalDom = {
   viewerEl: document.getElementById("viewer"),
   viewerTitleEl: document.getElementById("viewerTitle"),
   metaEl: document.getElementById("meta"),
-  repoUrlEl: document.getElementById("repoUrl"),
-  loadBtnEl: document.getElementById("loadBtn"),
 };
 
 window.setPortalStatus = function setPortalStatus(message, isError = false) {

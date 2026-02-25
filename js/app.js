@@ -1,9 +1,13 @@
 (function bootstrapPortal() {
+  const STATIC_SOURCE_URL = "https://github.com/pollyweb-org/pollyweb-docs";
   const state = window.PortalState;
   const dom = window.PortalDom;
   const { escapeHtml, isMarkdown } = window.PortalUtils;
   const { fetchTree, resolveSource, toRawUrl } = window.PortalApi;
   const setStatus = window.setPortalStatus;
+  const workspaceEl = document.getElementById("workspace");
+  const treePanelEl = document.getElementById("treePanel");
+  const dividerEl = document.getElementById("panelDivider");
 
   if (!window.marked) {
     throw new Error("Marked is required but was not loaded.");
@@ -25,11 +29,62 @@
     renderTree: tree.renderTree,
   });
 
-  async function loadRepository() {
-    const input = dom.repoUrlEl.value.trim();
+  function initPanelResize() {
+    if (!workspaceEl || !treePanelEl || !dividerEl) return;
 
+    const MIN_TREE_WIDTH = 160;
+    const MIN_CONTENT_WIDTH = 320;
+    const KEYBOARD_STEP = 24;
+    let isDragging = false;
+
+    function applyTreeWidth(width) {
+      const workspaceRect = workspaceEl.getBoundingClientRect();
+      const dividerWidth = dividerEl.getBoundingClientRect().width || 10;
+      const maxTreeWidth = Math.max(MIN_TREE_WIDTH, workspaceRect.width - MIN_CONTENT_WIDTH - dividerWidth);
+      const clamped = Math.min(Math.max(width, MIN_TREE_WIDTH), maxTreeWidth);
+      workspaceEl.style.setProperty("--tree-width", `${clamped}px`);
+    }
+
+    function updateFromPointer(clientX) {
+      const workspaceRect = workspaceEl.getBoundingClientRect();
+      const nextWidth = clientX - workspaceRect.left;
+      applyTreeWidth(nextWidth);
+    }
+
+    dividerEl.addEventListener("pointerdown", (event) => {
+      if (window.matchMedia("(max-width: 900px)").matches) return;
+      isDragging = true;
+      dividerEl.setPointerCapture(event.pointerId);
+      document.body.classList.add("resizing-panels");
+      updateFromPointer(event.clientX);
+    });
+
+    dividerEl.addEventListener("pointermove", (event) => {
+      if (!isDragging) return;
+      updateFromPointer(event.clientX);
+    });
+
+    function stopDragging() {
+      if (!isDragging) return;
+      isDragging = false;
+      document.body.classList.remove("resizing-panels");
+    }
+
+    dividerEl.addEventListener("pointerup", stopDragging);
+    dividerEl.addEventListener("pointercancel", stopDragging);
+
+    dividerEl.addEventListener("keydown", (event) => {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      event.preventDefault();
+      const currentWidth = treePanelEl.getBoundingClientRect().width;
+      const delta = event.key === "ArrowLeft" ? -KEYBOARD_STEP : KEYBOARD_STEP;
+      applyTreeWidth(currentWidth + delta);
+    });
+  }
+
+  async function loadRepository() {
     try {
-      const source = await resolveSource(input);
+      const source = await resolveSource(STATIC_SOURCE_URL);
       state.source = source;
       state.files = [];
       state.activePath = null;
@@ -98,16 +153,11 @@
     }
   }
 
-  dom.loadBtnEl.addEventListener("click", loadRepository);
   dom.treeSearchEl.addEventListener("input", (event) => {
     state.treeSearch = event.target.value;
     tree.renderTree(viewer.openFile);
   });
-  dom.repoUrlEl.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      loadRepository();
-    }
-  });
 
+  initPanelResize();
   loadRepository();
 })();

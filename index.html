@@ -16,21 +16,8 @@
 </head>
 <body>
   <div class="app">
-    <div class="topbar">
-      <div class="row">
-        <input
-          id="repoUrl"
-          type="url"
-          value="https://github.com/pollyweb-org/pollyweb-docs"
-          placeholder="https://github.com/owner/repo or /owner/repo/tree/branch/path"
-        />
-        <button id="loadBtn">Load Portal</button>
-      </div>
-      <div class="status" id="status">Ready.</div>
-    </div>
-
-    <div class="workspace">
-      <section class="panel">
+    <div id="workspace" class="workspace">
+      <section id="treePanel" class="panel tree-panel">
         <input
           id="treeSearch"
           class="tree-search"
@@ -41,11 +28,21 @@
         <div id="tree" class="tree"></div>
       </section>
 
-      <section class="panel">
+      <div
+        id="panelDivider"
+        class="panel-divider"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Resize panels"
+        tabindex="0"
+      ></div>
+
+      <section class="panel content-panel">
         <h2 id="viewerTitle">Document Viewer</h2>
         <article id="viewer" class="viewer">
-          <p class="hint">Load a GitHub repository or tree URL and select a file from the left panel.</p>
+          <p class="hint">Select a file from the left panel.</p>
         </article>
+        <div id="status" class="status">Ready.</div>
         <div id="meta" class="meta">No file selected.</div>
       </section>
     </div>

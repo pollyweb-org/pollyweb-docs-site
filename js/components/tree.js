@@ -43,6 +43,23 @@ function formatFolderLabel(name) {
   return stripLeadingNumber(name);
 }
 
+function isReadmeFile(name) {
+  return /^readme(\.[^/.]+)?$/i.test(name);
+}
+
+function isTopLevelReadme(path) {
+  if (!path || path.includes("/")) return false;
+  return isReadmeFile(path);
+}
+
+function createHomeIcon() {
+  const span = document.createElement("span");
+  span.className = "tree-icon";
+  span.innerHTML =
+    '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.2 7.1 8 2.5l5.8 4.6v6.2a.7.7 0 0 1-.7.7h-3.3V9.5H6.2V14H2.9a.7.7 0 0 1-.7-.7V7.1Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>';
+  return span;
+}
+
 function getSingleVisibleFilePath(node, parentPath) {
   let fileCount = 0;
   let singlePath = null;
@@ -79,9 +96,13 @@ window.createTreeComponent = function createTreeComponent(state, treeEl) {
     spacer.style.opacity = "0";
     const label = document.createElement("span");
     const fileName = fullPath.split("/").pop() || fullPath;
-    label.textContent = formatFileLabel(fileName);
+    const isHome = isTopLevelReadme(fullPath);
+    label.textContent = isHome ? "Home" : formatFileLabel(fileName);
 
     btn.appendChild(spacer);
+    if (isHome) {
+      btn.appendChild(createHomeIcon());
+    }
     btn.appendChild(label);
 
     if (state.activePath === fullPath) {
@@ -94,6 +115,10 @@ window.createTreeComponent = function createTreeComponent(state, treeEl) {
   function renderTreeNode(node, parentPath, onOpenFile) {
     const ul = document.createElement("ul");
     const keys = Object.keys(node).sort((a, b) => {
+      const aHome = !parentPath && node[a] === null && isReadmeFile(a);
+      const bHome = !parentPath && node[b] === null && isReadmeFile(b);
+      if (aHome !== bHome) return aHome ? -1 : 1;
+
       const aDir = node[a] !== null;
       const bDir = node[b] !== null;
       if (aDir !== bDir) return aDir ? -1 : 1;

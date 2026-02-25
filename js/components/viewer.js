@@ -1,6 +1,6 @@
 window.createViewerComponent = function createViewerComponent(options) {
   const { state, viewerEl, viewerTitleEl, metaEl, setStatus, toRawUrl, renderTree } = options;
-  const { dirname, escapeHtml, isMarkdown, normalizePath, splitRef } = window.PortalUtils;
+  const { dirname, escapeHtml, normalizePath, splitRef } = window.PortalUtils;
 
   function findFileForDirectory(dirPath) {
     const prefix = dirPath ? `${dirPath}/` : "";
@@ -14,10 +14,53 @@ window.createViewerComponent = function createViewerComponent(options) {
     return candidates[0];
   }
 
+  function formatBreadcrumbLabel(segment, isFile = false) {
+    const cleaned = segment.replace(/^\d+[-_.\s]*/, "");
+    if (!isFile) {
+      return cleaned || segment;
+    }
+    const withoutExtension = cleaned.replace(/\.[^/.]+$/, "");
+    return withoutExtension || cleaned || segment;
+  }
+
+  function normalizeBreadcrumbLabel(label) {
+    return label
+      .normalize("NFKC")
+      .replace(/[\uFE0E\uFE0F]/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase();
+  }
+
+  function getVisibleFiles() {
+    const query = state.treeSearch.trim().toLowerCase();
+    if (!query) return state.files;
+    return state.files.filter((filePath) => filePath.toLowerCase().includes(query));
+  }
+
+  function shouldHideParentFolder(path) {
+    const parts = path.split("/");
+    if (parts.length < 2) return false;
+
+    const folderPath = parts.slice(0, -1).join("/");
+    const visibleInFolder = getVisibleFiles().filter((filePath) => dirname(filePath) === folderPath);
+    return visibleInFolder.length === 1 && visibleInFolder[0] === path;
+  }
+
+  function shouldHideParentBecauseSameName(path) {
+    const parts = path.split("/");
+    if (parts.length < 2) return false;
+
+    const parentLabel = normalizeBreadcrumbLabel(formatBreadcrumbLabel(parts[parts.length - 2], false));
+    const fileLabel = normalizeBreadcrumbLabel(formatBreadcrumbLabel(parts[parts.length - 1], true));
+    return parentLabel && fileLabel && parentLabel === fileLabel;
+  }
+
   function renderBreadcrumb(path, onOpenFile) {
     viewerTitleEl.textContent = "";
     const parts = path.split("/");
     const crumbs = [];
+    const hideParentFolder = shouldHideParentFolder(path) || shouldHideParentBecauseSameName(path);
 
     crumbs.push({
       label: "home",
@@ -25,12 +68,25 @@ window.createViewerComponent = function createViewerComponent(options) {
     });
 
     for (let i = 0; i < parts.length; i += 1) {
+      if (hideParentFolder && i === parts.length - 2) {
+        continue;
+      }
       const currentPath = parts.slice(0, i + 1).join("/");
       const isFile = i === parts.length - 1;
       crumbs.push({
-        label: parts[i],
+        label: formatBreadcrumbLabel(parts[i], isFile),
         targetPath: isFile ? currentPath : findFileForDirectory(currentPath),
       });
+    }
+
+    if (crumbs.length >= 3) {
+      const parentIdx = crumbs.length - 2;
+      const fileIdx = crumbs.length - 1;
+      const parentLabel = normalizeBreadcrumbLabel(crumbs[parentIdx].label);
+      const fileLabel = normalizeBreadcrumbLabel(crumbs[fileIdx].label);
+      if (parentLabel && fileLabel && parentLabel === fileLabel) {
+        crumbs.splice(parentIdx, 1);
+      }
     }
 
     crumbs.forEach((crumb, idx) => {
@@ -74,6 +130,32 @@ window.createViewerComponent = function createViewerComponent(options) {
     if (repoPath === root) return "";
     if (repoPath.startsWith(prefix)) return repoPath.slice(prefix.length);
     return repoPath;
+  }
+
+  function resolveVisibleDocPath(visiblePath) {
+    if (!visiblePath) return null;
+
+    const normalized = normalizePath(visiblePath);
+    const fileSet = new Set(state.files);
+    if (fileSet.has(normalized)) return normalized;
+
+    const lowerToPath = new Map(state.files.map((filePath) => [filePath.toLowerCase(), filePath]));
+    const candidates = [
+      normalized,
+      `${normalized}.md`,
+      `${normalized}.mdx`,
+      `${normalized}.markdown`,
+      `${normalized}/readme.md`,
+      `${normalized}/readme.mdx`,
+      `${normalized}/readme.markdown`,
+    ];
+
+    for (const candidate of candidates) {
+      const resolved = lowerToPath.get(candidate.toLowerCase());
+      if (resolved) return resolved;
+    }
+
+    return null;
   }
 
   function resolveRepoPath(currentVisiblePath, refPath) {
@@ -150,12 +232,14 @@ window.createViewerComponent = function createViewerComponent(options) {
       const { path: refPath, suffix } = splitRef(href);
       const repoPath = resolveRepoPath(currentVisiblePath, refPath);
       const visiblePath = getVisiblePathForRepoPath(repoPath);
+      const docPath = resolveVisibleDocPath(visiblePath);
 
-      if (isMarkdown(visiblePath) && state.files.includes(visiblePath)) {
+      if (docPath) {
+        link.href = `?page=${encodeURIComponent(docPath)}${suffix}`;
         link.addEventListener("click", (event) => {
           event.preventDefault();
           const anchor = suffix.startsWith("#") ? decodeURIComponent(suffix.slice(1)) : "";
-          onOpenFile(visiblePath, anchor);
+          onOpenFile(docPath, anchor);
         });
       } else {
         link.href = `${toRawUrl(source, visiblePath)}${suffix}`;
