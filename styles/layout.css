@@ -178,14 +178,14 @@ body.resizing-panels * {
 
 .meta {
   position: absolute;
-  top: 12px;
-  right: 14px;
+  top: 8px;
+  right: 10px;
   padding: 0;
   border: 0;
   font-size: 12px;
   color: var(--muted);
   background: transparent;
-  z-index: 3;
+  z-index: 4;
 }
 
 .meta a {
@@ -203,31 +203,61 @@ body.resizing-panels * {
 .meta-actions {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .meta-refresh-btn {
   border: 1px solid var(--line);
-  background: rgba(17, 24, 35, 0.55);
-  color: var(--accent-2);
-  font-size: 11px;
-  line-height: 1;
-  padding: 4px 7px;
-  border-radius: 6px;
+  background: #111823;
+  color: var(--text);
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 8px;
   cursor: pointer;
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
+  transition: background 120ms ease;
 }
 
 .meta-refresh-btn:hover {
-  color: #d4dbe7;
-  border-color: rgba(212, 219, 231, 0.6);
+  background: var(--tree-hover);
+}
+
+.meta-refresh-btn:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 0;
+}
+
+.meta-refresh-btn::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  right: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  opacity: 0;
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 1;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: #111823;
+  color: #d0d8e3;
+  transition: opacity 120ms ease;
+}
+
+.meta-refresh-btn:hover::after,
+.meta-refresh-btn:focus-visible::after {
+  opacity: 1;
 }
 
 .meta-refresh-btn svg {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   display: block;
 }
 
