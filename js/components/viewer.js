@@ -166,6 +166,117 @@ window.createViewerComponent = function createViewerComponent(options) {
     return normalizePath(`${dirname(currentRepoPath)}/${refPath}`);
   }
 
+  function decodeRefPath(path) {
+    try {
+      return decodeURIComponent(path);
+    } catch {
+      return path;
+    }
+  }
+
+  function extractRepoRelativePathFromAbsoluteUrl(rawHref) {
+    if (!state.source) return null;
+
+    let url;
+    try {
+      url = new URL(rawHref, window.location.href);
+    } catch {
+      return null;
+    }
+
+    const sourceOwner = state.source.owner.toLowerCase();
+    const sourceRepo = state.source.repo.toLowerCase();
+    const sourceBranch = state.source.branch.toLowerCase();
+
+    if (url.hostname === "github.com") {
+      const parts = url.pathname.split("/").filter(Boolean);
+      if (parts.length < 5) return null;
+      const [owner, repo, mode, branch, ...rest] = parts;
+      if (owner.toLowerCase() !== sourceOwner || repo.toLowerCase() !== sourceRepo) return null;
+      if ((mode !== "blob" && mode !== "tree") || branch.toLowerCase() !== sourceBranch) return null;
+      return decodeRefPath(rest.join("/"));
+    }
+
+    if (url.hostname === "raw.githubusercontent.com") {
+      const parts = url.pathname.split("/").filter(Boolean);
+      if (parts.length < 4) return null;
+      const [owner, repo, branch, ...rest] = parts;
+      if (owner.toLowerCase() !== sourceOwner || repo.toLowerCase() !== sourceRepo) return null;
+      if (branch.toLowerCase() !== sourceBranch) return null;
+      return decodeRefPath(rest.join("/"));
+    }
+
+    return null;
+  }
+
+  function stripUrlDecoration(url) {
+    return url.replace(/[?#].*$/, "");
+  }
+
+  function isVideoUrl(url) {
+    return /\.(mp4|webm|ogg|mov|m4v)$/i.test(stripUrlDecoration(url));
+  }
+
+  function isGitHubUserAttachmentUrl(url) {
+    try {
+      const parsed = new URL(url, window.location.href);
+      return (
+        parsed.hostname === "github.com" &&
+        parsed.pathname.toLowerCase().startsWith("/user-attachments/assets/")
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function isLikelyVideoLink(linkEl, url) {
+    if (isVideoUrl(url)) return true;
+
+    const label = (linkEl.textContent || "").trim();
+    if (isVideoUrl(label)) return true;
+
+    if (isGitHubUserAttachmentUrl(url) && isVideoUrl(label)) return true;
+
+    return false;
+  }
+
+  function buildInlineVideo(url, label = "video") {
+    const wrapper = document.createElement("div");
+    wrapper.className = "inline-video";
+
+    const video = document.createElement("video");
+    video.src = url;
+    video.controls = true;
+    video.preload = "metadata";
+    video.playsInline = true;
+
+    wrapper.appendChild(video);
+    return wrapper;
+  }
+
+  function replaceLinkWithVideo(linkEl, url) {
+    const label = (linkEl.textContent || "").trim() || "video";
+    const video = buildInlineVideo(url, label);
+    const parent = linkEl.parentElement;
+
+    if (parent && parent.tagName === "P") {
+      const text = (parent.textContent || "").replace(/\s+/g, "");
+      const singleLink = parent.querySelectorAll("a").length === 1 && text === label.replace(/\s+/g, "");
+      if (singleLink) {
+        parent.replaceWith(video);
+        return;
+      }
+    }
+
+    linkEl.replaceWith(video);
+  }
+
+  function replaceImageWithVideo(imgEl, url) {
+    const alt = (imgEl.getAttribute("alt") || "").trim() || "video";
+    const video = buildInlineVideo(url, alt);
+    imgEl.replaceWith(video);
+  }
+
   function scrollToAnchor(anchor) {
     if (!anchor) return;
     const targetById = document.getElementById(anchor);
@@ -202,12 +313,23 @@ window.createViewerComponent = function createViewerComponent(options) {
     for (const img of images) {
       const src = (img.getAttribute("src") || "").trim();
       if (!src) continue;
-      if (/^(https?:|data:|blob:|\/\/)/i.test(src)) continue;
+      if (/^(https?:|data:|blob:|\/\/)/i.test(src)) {
+        if (isVideoUrl(src)) {
+          replaceImageWithVideo(img, src);
+        }
+        continue;
+      }
 
       const { path: refPath, suffix } = splitRef(src);
-      const repoPath = resolveRepoPath(currentVisiblePath, refPath);
+      const decodedRefPath = decodeRefPath(refPath);
+      const repoPath = resolveRepoPath(currentVisiblePath, decodedRefPath);
       const visiblePath = getVisiblePathForRepoPath(repoPath);
-      img.src = `${toRawUrl(source, visiblePath)}${suffix}`;
+      const resolvedUrl = `${toRawUrl(source, visiblePath)}${suffix}`;
+      if (isVideoUrl(src) || isVideoUrl(resolvedUrl)) {
+        replaceImageWithVideo(img, resolvedUrl);
+      } else {
+        img.src = resolvedUrl;
+      }
     }
 
     const links = viewerEl.querySelectorAll("a[href]");
@@ -225,12 +347,42 @@ window.createViewerComponent = function createViewerComponent(options) {
         continue;
       }
 
+      const absoluteRepoPath = extractRepoRelativePathFromAbsoluteUrl(href);
+      if (absoluteRepoPath) {
+        const visiblePath = getVisiblePathForRepoPath(normalizePath(absoluteRepoPath));
+        const docPath = resolveVisibleDocPath(visiblePath);
+        if (docPath) {
+          const { suffix, anchor } = (() => {
+            try {
+              const parsed = new URL(href, window.location.href);
+              return {
+                suffix: `${parsed.search}${parsed.hash}`,
+                anchor: parsed.hash ? decodeURIComponent(parsed.hash.slice(1)) : "",
+              };
+            } catch {
+              return { suffix: "", anchor: "" };
+            }
+          })();
+
+          link.href = `?page=${encodeURIComponent(docPath)}${suffix}`;
+          link.addEventListener("click", (event) => {
+            event.preventDefault();
+            onOpenFile(docPath, anchor);
+          });
+          continue;
+        }
+      }
+
       if (/^(https?:|mailto:|data:|blob:|\/\/)/i.test(href)) {
+        if (isLikelyVideoLink(link, href)) {
+          replaceLinkWithVideo(link, href);
+        }
         continue;
       }
 
       const { path: refPath, suffix } = splitRef(href);
-      const repoPath = resolveRepoPath(currentVisiblePath, refPath);
+      const decodedRefPath = decodeRefPath(refPath);
+      const repoPath = resolveRepoPath(currentVisiblePath, decodedRefPath);
       const visiblePath = getVisiblePathForRepoPath(repoPath);
       const docPath = resolveVisibleDocPath(visiblePath);
 
@@ -242,7 +394,12 @@ window.createViewerComponent = function createViewerComponent(options) {
           onOpenFile(docPath, anchor);
         });
       } else {
-        link.href = `${toRawUrl(source, visiblePath)}${suffix}`;
+        const resolvedUrl = `${toRawUrl(source, visiblePath)}${suffix}`;
+        if (isVideoUrl(href) || isVideoUrl(resolvedUrl)) {
+          replaceLinkWithVideo(link, resolvedUrl);
+          continue;
+        }
+        link.href = resolvedUrl;
         link.target = "_blank";
         link.rel = "noreferrer";
       }

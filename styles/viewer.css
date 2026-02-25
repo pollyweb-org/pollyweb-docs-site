@@ -87,9 +87,21 @@
   display: block;
   max-width: 100%;
   height: auto;
-  border-radius: 12px;
+  border-radius: 0;
   border: 1px solid var(--border);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.viewer .inline-video {
+  margin: 0 0 8px;
+}
+
+.viewer .inline-video video {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  border: 1px solid var(--border);
+  background: #000;
 }
 
 .viewer table {
