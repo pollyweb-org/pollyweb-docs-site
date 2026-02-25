@@ -18,9 +18,8 @@ window.createViewerComponent = function createViewerComponent(options) {
     metaEl.innerHTML = [
       '<span class="meta-actions">',
       `<a href="${editUrl}" target="_blank" rel="noreferrer">Source</a>`,
-      '<button type="button" class="meta-refresh-btn" aria-label="Refresh page content cache">',
-      '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 5.25V2.75h-2.5M3 10.75v2.5h2.5M12.2 7A4.75 4.75 0 0 0 4.8 4.4L3 5.9M3.8 9A4.75 4.75 0 0 0 11.2 11.6L13 10.1" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-      "<span>Refresh</span>",
+      '<button type="button" class="meta-refresh-btn" aria-label="Refresh page content cache" data-tooltip="Refresh content">',
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.146 4.854l-1.489 1.489A8 8 0 1 0 12 20a8.094 8.094 0 0 0 7.371-4.886 1 1 0 1 0-1.842-.779A6.071 6.071 0 0 1 12 18a6 6 0 1 1 4.243-10.243l-1.39 1.39a.5.5 0 0 0 .354.854H19.5A.5.5 0 0 0 20 9.5V5.207a.5.5 0 0 0-.854-.353z" fill="currentColor"/></svg>',
       "</button>",
       "</span>",
     ].join("");
@@ -288,6 +287,40 @@ window.createViewerComponent = function createViewerComponent(options) {
     return wrapper;
   }
 
+  function renderLoadErrorState(path, editUrl, message, onRetry) {
+    const safePath = escapeHtml(path);
+    const safeMessage = escapeHtml(message || "Unknown error.");
+    const sourceAction = editUrl
+      ? `<a class="viewer-error-btn ghost" href="${editUrl}" target="_blank" rel="noreferrer">Open source</a>`
+      : "";
+
+    viewerEl.innerHTML = [
+      '<section class="viewer-error-state" role="alert" aria-live="assertive">',
+      '<div class="viewer-error-head">',
+      '<span class="viewer-error-icon" aria-hidden="true">',
+      '<svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2zm0 14.2a1.2 1.2 0 1 1-1.2 1.2A1.2 1.2 0 0 1 12 16.2zm1-3.7h-2V6.8h2z" fill="currentColor"/></svg>',
+      "</span>",
+      '<p class="viewer-error-kicker">Content Unavailable</p>',
+      "<h3>Couldn&rsquo;t load this docs page</h3>",
+      `<p class="viewer-error-copy">The docs API failed while fetching <code>${safePath}</code>.</p>`,
+      "</div>",
+      '<div class="viewer-error-actions">',
+      '<button type="button" class="viewer-error-btn primary" data-viewer-error-action="retry">Try again</button>',
+      sourceAction,
+      "</div>",
+      '<details class="viewer-error-details">',
+      "<summary>Technical details</summary>",
+      `<pre>${safeMessage}</pre>`,
+      "</details>",
+      "</section>",
+    ].join("");
+
+    const retryBtn = viewerEl.querySelector('[data-viewer-error-action="retry"]');
+    if (retryBtn) {
+      retryBtn.addEventListener("click", onRetry);
+    }
+  }
+
   function replaceLinkWithVideo(linkEl, url) {
     const label = (linkEl.textContent || "").trim() || "video";
     const video = buildInlineVideo(url, label);
@@ -348,6 +381,25 @@ window.createViewerComponent = function createViewerComponent(options) {
     tocPanelEl.hidden = !visible;
   }
 
+  function updateTocTooltips() {
+    if (!tocNavEl) return;
+    const links = tocNavEl.querySelectorAll(".toc-link");
+    for (const link of links) {
+      if (link.scrollWidth > link.clientWidth) {
+        link.title = link.textContent || "";
+      } else {
+        link.removeAttribute("title");
+      }
+    }
+  }
+
+  if (tocNavEl && typeof ResizeObserver === "function") {
+    const tocResizeObserver = new ResizeObserver(() => {
+      updateTocTooltips();
+    });
+    tocResizeObserver.observe(tocNavEl);
+  }
+
   function updateTableOfContents(currentVisiblePath) {
     if (!tocNavEl) return;
 
@@ -405,6 +457,7 @@ window.createViewerComponent = function createViewerComponent(options) {
 
     tocNavEl.innerHTML = "";
     tocNavEl.appendChild(list);
+    window.requestAnimationFrame(updateTocTooltips);
   }
 
   function updateLocation(path, anchor = "", options = {}) {
@@ -570,10 +623,12 @@ window.createViewerComponent = function createViewerComponent(options) {
         setStatus(`Loaded ${path}`);
       }
     } catch (err) {
-      viewerEl.innerHTML = `<p class="hint">${escapeHtml(err.message)}</p>`;
+      renderLoadErrorState(path, editUrl, err.message, () => {
+        void openFile(path, anchor, { historyMode: "replace" });
+      });
       setTocPanelVisible(false);
       renderEmptyToc("No headers available.");
-      metaEl.textContent = "Failed to load file.";
+      metaEl.innerHTML = "";
       setStatus(`Failed to load ${path}`, true);
     } finally {
       pendingLoads = Math.max(0, pendingLoads - 1);
