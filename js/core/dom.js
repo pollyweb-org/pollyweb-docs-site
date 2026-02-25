@@ -3,6 +3,7 @@ window.PortalDom = {
   treeEl: document.getElementById("tree"),
   treeSearchEl: document.getElementById("treeSearch"),
   treePanelToggleBtnEl: document.getElementById("treePanelToggleBtn"),
+  themeToggleBtnEl: document.getElementById("themeToggleBtn"),
   contentExpandBtnEl: document.getElementById("contentExpandBtn"),
   viewerEl: document.getElementById("viewer"),
   viewerTitleEl: document.getElementById("viewerTitle"),

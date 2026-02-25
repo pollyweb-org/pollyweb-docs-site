@@ -99,14 +99,14 @@ body.resizing-panels * {
 
 #viewerTitle {
   margin: 0;
-  padding: 16px 220px 20px 52px;
+  padding: 16px 260px 20px 52px;
   font-size: 14px;
   line-height: 1;
   color: var(--muted);
   border-bottom: 1px solid var(--border);
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  background: linear-gradient(180deg, rgba(20, 24, 29, 0.94), rgba(17, 20, 25, 0.8));
+  background: var(--title-bg);
 }
 
 .sidebar-toggle {
@@ -121,7 +121,7 @@ body.resizing-panels * {
   align-items: center;
   justify-content: center;
   border: 1px solid var(--line);
-  background: #0f1217;
+  background: var(--control-bg);
   color: inherit;
   border-radius: 8px;
   cursor: pointer;
@@ -151,9 +151,9 @@ body.resizing-panels * {
 .sidebar-toggle::after {
   content: attr(data-tooltip);
   position: absolute;
-  left: calc(100% + 8px);
-  top: 50%;
-  transform: translateY(-50%);
+  right: 0;
+  top: calc(100% + 8px);
+  transform: none;
   pointer-events: none;
   opacity: 0;
   white-space: nowrap;
@@ -162,14 +162,14 @@ body.resizing-panels * {
   padding: 6px 8px;
   border-radius: 6px;
   border: 1px solid var(--line);
-  background: #0f1217;
-  color: #c5ccd7;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-text);
   transition: opacity 120ms ease;
 }
 
-.content-expand-toggle::after {
+.theme-toggle-btn {
   left: auto;
-  right: calc(100% + 8px);
+  right: 10px;
 }
 
 .sidebar-toggle:hover::after,
@@ -180,7 +180,7 @@ body.resizing-panels * {
 .repo-home-btn {
   position: absolute;
   top: 8px;
-  right: 10px;
+  right: 48px;
   z-index: 4;
   width: 30px;
   height: 30px;
@@ -190,7 +190,7 @@ body.resizing-panels * {
   justify-content: center;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #0f1217;
+  background: var(--control-bg);
   color: var(--text);
   text-decoration: none;
 }
@@ -224,8 +224,8 @@ body.resizing-panels * {
   padding: 6px 8px;
   border-radius: 6px;
   border: 1px solid var(--line);
-  background: #0f1217;
-  color: #c5ccd7;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-text);
   transition: opacity 120ms ease;
 }
 
@@ -237,7 +237,7 @@ body.resizing-panels * {
 .meta {
   position: absolute;
   top: 8px;
-  right: 48px;
+  right: 86px;
   padding: 0;
   border: 0;
   font-size: 12px;
@@ -255,7 +255,7 @@ body.resizing-panels * {
 
 .meta-edit-btn {
   border: 1px solid var(--line);
-  background: #0f1217;
+  background: var(--control-bg);
   color: var(--text);
   width: 30px;
   height: 30px;
@@ -288,7 +288,7 @@ body.resizing-panels * {
 .meta-edit-btn::after {
   content: attr(data-tooltip);
   position: absolute;
-  right: -38px;
+  right: 0;
   top: calc(100% + 8px);
   transform: none;
   pointer-events: none;
@@ -299,8 +299,8 @@ body.resizing-panels * {
   padding: 6px 8px;
   border-radius: 6px;
   border: 1px solid var(--line);
-  background: #0f1217;
-  color: #c5ccd7;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-text);
   transition: opacity 120ms ease;
 }
 
@@ -311,7 +311,7 @@ body.resizing-panels * {
 
 .meta-refresh-btn {
   border: 1px solid var(--line);
-  background: #0f1217;
+  background: var(--control-bg);
   color: var(--text);
   width: 30px;
   height: 30px;
@@ -327,7 +327,7 @@ body.resizing-panels * {
 
 .meta-expand-btn {
   border: 1px solid var(--line);
-  background: #0f1217;
+  background: var(--control-bg);
   color: var(--text);
   width: 30px;
   height: 30px;
@@ -362,7 +362,7 @@ body.resizing-panels * {
 .meta-refresh-btn::after {
   content: attr(data-tooltip);
   position: absolute;
-  right: -38px;
+  right: 0;
   top: calc(100% + 8px);
   transform: none;
   pointer-events: none;
@@ -373,15 +373,15 @@ body.resizing-panels * {
   padding: 6px 8px;
   border-radius: 6px;
   border: 1px solid var(--line);
-  background: #0f1217;
-  color: #c5ccd7;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-text);
   transition: opacity 120ms ease;
 }
 
 .meta-expand-btn::after {
   content: attr(data-tooltip);
   position: absolute;
-  right: -38px;
+  right: 0;
   top: calc(100% + 8px);
   transform: none;
   pointer-events: none;
@@ -392,8 +392,8 @@ body.resizing-panels * {
   padding: 6px 8px;
   border-radius: 6px;
   border: 1px solid var(--line);
-  background: #0f1217;
-  color: #c5ccd7;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-text);
   transition: opacity 120ms ease;
 }
 
@@ -468,15 +468,19 @@ body.resizing-panels * {
 
   #viewerTitle {
     padding-left: 52px;
-    padding-right: 160px;
+    padding-right: 190px;
   }
 
-  .repo-home-btn {
+  .theme-toggle-btn {
     right: 8px;
   }
 
-  .meta {
+  .repo-home-btn {
     right: 46px;
+  }
+
+  .meta {
+    right: 84px;
   }
 
   .panel-divider {

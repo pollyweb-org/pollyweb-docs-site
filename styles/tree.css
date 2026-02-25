@@ -12,7 +12,7 @@
   padding: 7px 9px;
   border-radius: 8px;
   border: 1px solid var(--line);
-  background: #0f1217;
+  background: var(--control-bg);
   color: inherit;
   font: inherit;
 }
@@ -58,7 +58,7 @@
 
 .tree button.active {
   background: var(--accent-soft);
-  color: #c7ced8;
+  color: var(--text);
   font-weight: 600;
 }
 
@@ -83,7 +83,7 @@
   width: 16px;
   height: 16px;
   flex: 0 0 16px;
-  color: #89919e;
+  color: var(--muted);
 }
 
 .tree-icon svg {
@@ -96,7 +96,7 @@
   width: 10px;
   height: 10px;
   flex: 0 0 10px;
-  color: #848d9a;
+  color: var(--muted);
   transition: transform 120ms ease;
 }
 

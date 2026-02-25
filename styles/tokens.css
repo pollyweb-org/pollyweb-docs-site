@@ -14,6 +14,56 @@
   --line: rgba(142, 150, 162, 0.28);
   --tree-hover: rgba(138, 145, 157, 0.1);
   --code-bg: #111419;
+  --body-radial-1: rgba(108, 113, 122, 0.14);
+  --body-radial-2: rgba(86, 91, 99, 0.08);
+  --body-radial-3: rgba(76, 81, 89, 0.11);
+  --control-bg: #0f1217;
+  --tooltip-bg: #0f1217;
+  --tooltip-text: #c5ccd7;
+  --title-bg: linear-gradient(180deg, rgba(20, 24, 29, 0.94), rgba(17, 20, 25, 0.8));
+  --toc-bg: rgba(17, 21, 27, 0.8);
+  --scrollbar-track: #14181e;
+  --scrollbar-thumb-1: #7c858f;
+  --scrollbar-thumb-2: #636b76;
+  --scrollbar-thumb-hover-1: #8a929c;
+  --scrollbar-thumb-hover-2: #707984;
+  --link: #7ab8ff;
+  --link-hover: #9cccff;
+  --link-hover-bg: rgba(122, 184, 255, 0.16);
+  --focus-ring: rgba(122, 184, 255, 0.72);
+}
+
+:root[data-theme="light"] {
+  --bg: #f3f5f8;
+  --bg-2: #e9edf3;
+  --panel: rgba(252, 253, 255, 0.95);
+  --panel-solid: #ffffff;
+  --accent: #4e6074;
+  --accent-2: #3f5e81;
+  --accent-soft: rgba(70, 103, 140, 0.16);
+  --text: #16202c;
+  --muted: #526376;
+  --border: rgba(72, 89, 109, 0.2);
+  --line: rgba(72, 89, 109, 0.3);
+  --tree-hover: rgba(70, 103, 140, 0.11);
+  --code-bg: #eef2f8;
+  --body-radial-1: rgba(169, 186, 206, 0.24);
+  --body-radial-2: rgba(156, 174, 197, 0.2);
+  --body-radial-3: rgba(187, 201, 220, 0.22);
+  --control-bg: #f7f9fc;
+  --tooltip-bg: #eef3f9;
+  --tooltip-text: #1f2d3d;
+  --title-bg: linear-gradient(180deg, rgba(247, 250, 255, 0.97), rgba(239, 244, 251, 0.92));
+  --toc-bg: rgba(244, 248, 254, 0.9);
+  --scrollbar-track: #e1e7f0;
+  --scrollbar-thumb-1: #8a99ac;
+  --scrollbar-thumb-2: #728297;
+  --scrollbar-thumb-hover-1: #7c8da4;
+  --scrollbar-thumb-hover-2: #62768d;
+  --link: #165ea8;
+  --link-hover: #0f4d8c;
+  --link-hover-bg: rgba(22, 94, 168, 0.12);
+  --focus-ring: rgba(22, 94, 168, 0.58);
 }
 
 * {
@@ -30,9 +80,9 @@ body {
   font-family: var(--font-body);
   color: var(--text);
   background:
-    radial-gradient(circle at 18% 10%, rgba(108, 113, 122, 0.14) 0%, transparent 34%),
-    radial-gradient(circle at 84% 8%, rgba(86, 91, 99, 0.08) 0%, transparent 24%),
-    radial-gradient(circle at 48% 95%, rgba(76, 81, 89, 0.11) 0%, transparent 40%),
+    radial-gradient(circle at 18% 10%, var(--body-radial-1) 0%, transparent 34%),
+    radial-gradient(circle at 84% 8%, var(--body-radial-2) 0%, transparent 24%),
+    radial-gradient(circle at 48% 95%, var(--body-radial-3) 0%, transparent 40%),
     var(--bg);
   min-height: 100vh;
   overflow: hidden;

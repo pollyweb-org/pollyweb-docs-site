@@ -10,6 +10,7 @@
   const treePanelEl = document.getElementById("treePanel");
   const dividerEl = document.getElementById("panelDivider");
   const repoHomeBtnEl = document.getElementById("repoHomeBtn");
+  const THEME_STORAGE_KEY = "pollyweb-docs-theme";
   let isTreePanelCollapsed = false;
   let isContentExpanded = false;
 
@@ -44,9 +45,51 @@
     '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 2.75H2.75V6M10 2.75h3.25V6M6 13.25H2.75V10M10 13.25h3.25V10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const RESTORE_CONTENT_ICON =
     '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 6h3V3M9.5 3h3v3M3.5 10h3v3M9.5 13h3v-3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const THEME_LIGHT_ICON =
+    '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.1v1.5M8 12.4v1.5M3.78 3.78l1.06 1.06M11.16 11.16l1.06 1.06M2.1 8h1.5M12.4 8h1.5M3.78 12.22l1.06-1.06M11.16 4.84l1.06-1.06M8 5.1a2.9 2.9 0 1 1 0 5.8 2.9 2.9 0 0 1 0-5.8Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>';
+  const THEME_DARK_ICON =
+    '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10.87 2.38a5.88 5.88 0 1 0 2.75 10.9 5.5 5.5 0 1 1-2.75-10.9Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   if (repoHomeBtnEl) {
     repoHomeBtnEl.href = REPO_HOME_URL;
+  }
+
+  function readStoredTheme() {
+    try {
+      const theme = window.localStorage.getItem(THEME_STORAGE_KEY);
+      return theme === "dark" || theme === "light" ? theme : "";
+    } catch {
+      return "";
+    }
+  }
+
+  function getSystemTheme() {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+
+  function getActiveTheme() {
+    const rootTheme = document.documentElement.getAttribute("data-theme");
+    if (rootTheme === "dark" || rootTheme === "light") return rootTheme;
+    return readStoredTheme() || getSystemTheme();
+  }
+
+  function setTheme(theme) {
+    const nextTheme = theme === "dark" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", nextTheme);
+    if (dom.themeToggleBtnEl) {
+      const nextLabel = nextTheme === "dark" ? "Switch to light view" : "Switch to dark view";
+      dom.themeToggleBtnEl.innerHTML = nextTheme === "dark" ? THEME_LIGHT_ICON : THEME_DARK_ICON;
+      dom.themeToggleBtnEl.setAttribute("aria-label", nextLabel);
+      dom.themeToggleBtnEl.setAttribute("data-tooltip", nextLabel);
+    }
+  }
+
+  function persistTheme(theme) {
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {
+      // Ignore localStorage failures and keep in-memory theme only.
+    }
   }
 
   function getContentExpandBtnEl() {
@@ -370,6 +413,15 @@
   if (dom.treePanelToggleBtnEl) {
     dom.treePanelToggleBtnEl.addEventListener("click", () => {
       setTreePanelCollapsed(!isTreePanelCollapsed);
+    });
+  }
+
+  if (dom.themeToggleBtnEl) {
+    setTheme(getActiveTheme());
+    dom.themeToggleBtnEl.addEventListener("click", () => {
+      const nextTheme = getActiveTheme() === "dark" ? "light" : "dark";
+      setTheme(nextTheme);
+      persistTheme(nextTheme);
     });
   }
 
