@@ -69,7 +69,7 @@
   display: block;
   border: 0;
   background: transparent;
-  color: var(--accent-2);
+  color: #7ab8ff;
   text-align: left;
   font: inherit;
   padding: 0;
@@ -81,8 +81,8 @@
 }
 
 .toc-link:hover {
-  color: #bec5d0;
-  text-decoration: underline;
+  color: #9cccff;
+  text-decoration: none;
 }
 
 .toc-depth-3 {
@@ -323,8 +323,8 @@
 }
 
 .breadcrumb-btn:hover {
-  color: #bec5d0;
-  text-decoration: underline;
+  color: #9cccff;
+  text-decoration: none;
 }
 
 .breadcrumb-btn.active {
@@ -419,11 +419,22 @@
 }
 
 .viewer a {
-  color: var(--accent-2);
+  color: #7ab8ff;
+  text-decoration: none !important;
+  font-weight: 500;
+  transition: color 160ms ease, background-color 160ms ease;
 }
 
 .viewer a:hover {
-  color: #b2bbc8;
+  color: #9cccff;
+  text-decoration: none !important;
+  background: rgba(122, 184, 255, 0.16);
+  border-radius: 4px;
+}
+
+.viewer a:focus-visible {
+  outline: 2px solid rgba(122, 184, 255, 0.72);
+  outline-offset: 2px;
 }
 
 .viewer blockquote {
