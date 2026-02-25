@@ -441,6 +441,12 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
+.viewer :not(pre) > code {
+  background: var(--inline-code-bg);
+  border-radius: 6px;
+  padding: 0.08em 0.38em;
+}
+
 .viewer pre code.language-yaml .yaml-key,
 .viewer pre code.language-yml .yaml-key {
   color: var(--yaml-key);
