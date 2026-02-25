@@ -227,6 +227,38 @@ window.createViewerComponent = function createViewerComponent(options) {
       if (resolved) return resolved;
     }
 
+    const canonicalizePath = (path) =>
+      normalizePath(path)
+        .normalize("NFKC")
+        .replace(/[\uFE0E\uFE0F]/g, "")
+        .toLowerCase();
+    const canonicalToPath = new Map();
+    for (const filePath of state.files) {
+      const key = canonicalizePath(filePath);
+      if (!canonicalToPath.has(key)) {
+        canonicalToPath.set(key, filePath);
+      }
+    }
+    for (const candidate of candidates) {
+      const resolved = canonicalToPath.get(canonicalizePath(candidate));
+      if (resolved) return resolved;
+    }
+
+    // If a link targets a folder, route to the first markdown file inside it.
+    const normalizedPrefix = `${normalized}/`;
+    const firstInFolder = state.files.find((filePath) => {
+      const normalizedFilePath = normalizePath(filePath);
+      return normalizedFilePath.startsWith(normalizedPrefix);
+    });
+    if (firstInFolder) return firstInFolder;
+
+    const canonicalPrefix = `${canonicalizePath(normalized)}/`;
+    const firstCanonicalInFolder = state.files.find((filePath) => {
+      const canonicalFilePath = canonicalizePath(filePath);
+      return canonicalFilePath.startsWith(canonicalPrefix);
+    });
+    if (firstCanonicalInFolder) return firstCanonicalInFolder;
+
     return null;
   }
 
@@ -258,14 +290,13 @@ window.createViewerComponent = function createViewerComponent(options) {
 
     const sourceOwner = state.source.owner.toLowerCase();
     const sourceRepo = state.source.repo.toLowerCase();
-    const sourceBranch = state.source.branch.toLowerCase();
-
     if (url.hostname === "github.com") {
       const parts = url.pathname.split("/").filter(Boolean);
       if (parts.length < 5) return null;
       const [owner, repo, mode, branch, ...rest] = parts;
       if (owner.toLowerCase() !== sourceOwner || repo.toLowerCase() !== sourceRepo) return null;
-      if ((mode !== "blob" && mode !== "tree") || branch.toLowerCase() !== sourceBranch) return null;
+      if (mode !== "blob" && mode !== "tree") return null;
+      if (!branch) return null;
       return decodeRefPath(rest.join("/"));
     }
 
@@ -274,7 +305,7 @@ window.createViewerComponent = function createViewerComponent(options) {
       if (parts.length < 4) return null;
       const [owner, repo, branch, ...rest] = parts;
       if (owner.toLowerCase() !== sourceOwner || repo.toLowerCase() !== sourceRepo) return null;
-      if (branch.toLowerCase() !== sourceBranch) return null;
+      if (!branch) return null;
       return decodeRefPath(rest.join("/"));
     }
 
@@ -287,6 +318,26 @@ window.createViewerComponent = function createViewerComponent(options) {
 
   function isVideoUrl(url) {
     return /\.(mp4|webm|ogg|mov|m4v)$/i.test(stripUrlDecoration(url));
+  }
+
+  function isRawGitHubUrl(url) {
+    try {
+      const parsed = new URL(url, window.location.href);
+      return parsed.hostname === "raw.githubusercontent.com";
+    } catch {
+      return false;
+    }
+  }
+
+  function resolvePortalDocPathFromHref(href) {
+    try {
+      const parsed = new URL(href, window.location.href);
+      const page = parsed.searchParams.get("page");
+      if (!page) return null;
+      return decodeRefPath(page);
+    } catch {
+      return null;
+    }
   }
 
   function isRepoUserAttachmentUrl(url) {
@@ -549,6 +600,25 @@ window.createViewerComponent = function createViewerComponent(options) {
       const href = (link.getAttribute("href") || "").trim();
       if (!href) continue;
 
+      const portalDocPath = resolvePortalDocPathFromHref(href);
+      if (portalDocPath) {
+        const docPath = resolveVisibleDocPath(portalDocPath) || portalDocPath;
+        const anchor = (() => {
+          try {
+            const parsed = new URL(href, window.location.href);
+            return parsed.hash ? decodeURIComponent(parsed.hash.slice(1)) : "";
+          } catch {
+            return "";
+          }
+        })();
+        link.href = `?page=${encodeURIComponent(docPath)}${anchor ? `#${encodeURIComponent(anchor)}` : ""}`;
+        link.addEventListener("click", (event) => {
+          event.preventDefault();
+          onOpenFile(docPath, anchor, { historyMode: "push" });
+        });
+        continue;
+      }
+
       if (href.startsWith("#")) {
         link.addEventListener("click", (event) => {
           event.preventDefault();
@@ -586,6 +656,13 @@ window.createViewerComponent = function createViewerComponent(options) {
       }
 
       if (/^(https?:|mailto:|data:|blob:|\/\/)/i.test(href)) {
+        if (isRawGitHubUrl(href)) {
+          link.href = "#";
+          link.addEventListener("click", (event) => {
+            event.preventDefault();
+          });
+          continue;
+        }
         if (isLikelyVideoLink(link, href)) {
           replaceLinkWithVideo(link, href);
         }
@@ -607,8 +684,29 @@ window.createViewerComponent = function createViewerComponent(options) {
         });
       } else {
         const resolvedUrl = `${toRawUrl(source, visiblePath)}${suffix}`;
+        const resolvedRepoPath = extractRepoRelativePathFromAbsoluteUrl(resolvedUrl);
+        if (resolvedRepoPath) {
+          const internalVisiblePath = getVisiblePathForRepoPath(normalizePath(resolvedRepoPath));
+          const internalDocPath = resolveVisibleDocPath(internalVisiblePath);
+          if (internalDocPath) {
+            link.href = `?page=${encodeURIComponent(internalDocPath)}${suffix}`;
+            link.addEventListener("click", (event) => {
+              event.preventDefault();
+              const anchor = suffix.startsWith("#") ? decodeURIComponent(suffix.slice(1)) : "";
+              onOpenFile(internalDocPath, anchor, { historyMode: "push" });
+            });
+            continue;
+          }
+        }
         if (isVideoUrl(href) || isVideoUrl(resolvedUrl)) {
           replaceLinkWithVideo(link, resolvedUrl);
+          continue;
+        }
+        if (isRawGitHubUrl(resolvedUrl)) {
+          link.href = "#";
+          link.addEventListener("click", (event) => {
+            event.preventDefault();
+          });
           continue;
         }
         link.href = resolvedUrl;
