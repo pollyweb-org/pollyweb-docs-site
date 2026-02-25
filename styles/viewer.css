@@ -112,10 +112,14 @@
 
 .viewer h1 {
   font-size: 2em;
+  padding-bottom: 0.22em;
+  border-bottom: 1px solid var(--line);
 }
 
 .viewer h2 {
   font-size: 1.5em;
+  padding-bottom: 0.2em;
+  border-bottom: 1px solid var(--line);
 }
 
 .viewer h3 {
