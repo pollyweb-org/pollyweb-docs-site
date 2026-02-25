@@ -1,5 +1,5 @@
 window.createViewerComponent = function createViewerComponent(options) {
-  const { state, viewerEl, viewerTitleEl, metaEl, setStatus, toRawUrl, renderTree } = options;
+  const { state, viewerEl, viewerTitleEl, tocNavEl, metaEl, setStatus, toRawUrl, fetchRawFile, renderTree } = options;
   const { dirname, escapeHtml, normalizePath, splitRef } = window.PortalUtils;
 
   function findFileForDirectory(dirPath) {
@@ -294,6 +294,76 @@ window.createViewerComponent = function createViewerComponent(options) {
     }
   }
 
+  function toSlug(text) {
+    return text
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036F]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .trim()
+      .replace(/\s+/g, "-");
+  }
+
+  function renderEmptyToc(message) {
+    if (!tocNavEl) return;
+    tocNavEl.innerHTML = `<p class="hint">${escapeHtml(message)}</p>`;
+  }
+
+  function updateTableOfContents(currentVisiblePath) {
+    if (!tocNavEl) return;
+
+    const headings = Array.from(viewerEl.querySelectorAll("h1, h2, h3, h4"));
+    if (!headings.length) {
+      renderEmptyToc("No headers available.");
+      return;
+    }
+
+    const usedIds = new Set();
+    const items = [];
+
+    for (const heading of headings) {
+      const level = Number(heading.tagName.slice(1));
+      const title = (heading.textContent || "").trim();
+      if (!title) continue;
+
+      let id = heading.getAttribute("id") || toSlug(title) || `section-${items.length + 1}`;
+      let candidate = id;
+      let index = 2;
+      while (usedIds.has(candidate) || (document.getElementById(candidate) && document.getElementById(candidate) !== heading)) {
+        candidate = `${id}-${index}`;
+        index += 1;
+      }
+      id = candidate;
+      heading.id = id;
+      usedIds.add(id);
+      items.push({ id, title, level });
+    }
+
+    if (!items.length) {
+      renderEmptyToc("No headers available.");
+      return;
+    }
+
+    const list = document.createElement("ul");
+    for (const item of items) {
+      const li = document.createElement("li");
+      const link = document.createElement("a");
+      link.className = `toc-link toc-depth-${item.level}`;
+      link.href = `#${encodeURIComponent(item.id)}`;
+      link.textContent = item.title;
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        scrollToAnchor(item.id);
+        updateLocation(state.activePath || currentVisiblePath, item.id);
+      });
+      li.appendChild(link);
+      list.appendChild(li);
+    }
+
+    tocNavEl.innerHTML = "";
+    tocNavEl.appendChild(list);
+  }
+
   function updateLocation(path, anchor = "", options = {}) {
     const { historyMode = "replace" } = options;
     const url = new URL(window.location.href);
@@ -421,7 +491,6 @@ window.createViewerComponent = function createViewerComponent(options) {
     const { source } = state;
     if (!source) return;
 
-    const rawUrl = toRawUrl(source, path);
     const repoPath = getRepoPathForVisiblePath(path)
       .split("/")
       .map((segment) => encodeURIComponent(segment))
@@ -431,24 +500,27 @@ window.createViewerComponent = function createViewerComponent(options) {
     renderBreadcrumb(path, openFile);
 
     try {
-      const response = await fetch(rawUrl);
-      if (!response.ok) {
-        throw new Error(`Raw file request failed (${response.status}).`);
-      }
-
-      const text = await response.text();
+      const { data: text, fromCache, stale } = await fetchRawFile(source, path);
 
       viewerEl.innerHTML = window.marked.parse(text);
       processRenderedContent(path, openFile);
+      updateTableOfContents(path);
       scrollToAnchor(anchor || state.initialAnchor);
       const activeAnchor = anchor || state.initialAnchor;
       updateLocation(path, activeAnchor, { historyMode });
       state.initialAnchor = "";
 
       metaEl.innerHTML = `<a href="${editUrl}" target="_blank" rel="noreferrer">Source</a>`;
-      setStatus(`Loaded ${path}`);
+      if (stale) {
+        setStatus(`Loaded ${path} (stale cache, refreshing in background).`);
+      } else if (fromCache) {
+        setStatus(`Loaded ${path} (cache).`);
+      } else {
+        setStatus(`Loaded ${path}`);
+      }
     } catch (err) {
       viewerEl.innerHTML = `<p class="hint">${escapeHtml(err.message)}</p>`;
+      renderEmptyToc("No headers available.");
       metaEl.textContent = "Failed to load file.";
       setStatus(`Failed to load ${path}`, true);
     }

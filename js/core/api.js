@@ -19,6 +19,15 @@ function parseGitHubUrl(input) {
   return { owner, repo, branch: null, rootPath: "" };
 }
 
+const GITHUB_ACCEPT_HEADER = { Accept: "application/vnd.github+json" };
+
+function getCache() {
+  if (!window.PortalCache || typeof window.PortalCache.fetchCached !== "function") {
+    throw new Error("PortalCache is required but was not loaded.");
+  }
+  return window.PortalCache.fetchCached;
+}
+
 async function resolveSource(input) {
   const parsed = parseGitHubUrl(input);
   if (parsed.branch) {
@@ -26,16 +35,25 @@ async function resolveSource(input) {
   }
 
   const endpoint = `https://api.github.com/repos/${parsed.owner}/${parsed.repo}`;
-  const response = await fetch(endpoint, {
-    headers: { Accept: "application/vnd.github+json" },
-  });
-
-  if (!response.ok) {
-    const msg = await response.text();
-    throw new Error(`GitHub repo lookup error (${response.status}): ${msg}`);
+  const fetchCached = getCache();
+  let data;
+  try {
+    const result = await fetchCached(endpoint, {
+      cacheKey: `repo-meta:${parsed.owner}/${parsed.repo}`,
+      headers: GITHUB_ACCEPT_HEADER,
+      responseType: "json",
+      ttlMs: 30 * 60 * 1000,
+      negativeTtlMs: 2 * 60 * 1000,
+      minRequestIntervalMs: 15 * 1000,
+      staleWhileRevalidate: true,
+    });
+    data = result.data;
+  } catch (err) {
+    const status = typeof err.status === "number" ? err.status : "unknown";
+    const msg = typeof err.body === "string" ? err.body : err.message;
+    throw new Error(`GitHub repo lookup error (${status}): ${msg}`);
   }
 
-  const data = await response.json();
   if (!data.default_branch) {
     throw new Error("Could not resolve repository default branch.");
   }
@@ -51,16 +69,25 @@ async function resolveSource(input) {
 async function fetchTree(source) {
   const { owner, repo, branch } = source;
   const endpoint = `https://api.github.com/repos/${owner}/${repo}/git/trees/${encodeURIComponent(branch)}?recursive=1`;
-  const response = await fetch(endpoint, {
-    headers: { Accept: "application/vnd.github+json" },
-  });
-
-  if (!response.ok) {
-    const msg = await response.text();
-    throw new Error(`GitHub API error (${response.status}): ${msg}`);
+  const fetchCached = getCache();
+  let data;
+  try {
+    const result = await fetchCached(endpoint, {
+      cacheKey: `repo-tree:${owner}/${repo}@${branch}`,
+      headers: GITHUB_ACCEPT_HEADER,
+      responseType: "json",
+      ttlMs: 20 * 60 * 1000,
+      negativeTtlMs: 2 * 60 * 1000,
+      minRequestIntervalMs: 15 * 1000,
+      staleWhileRevalidate: true,
+    });
+    data = result.data;
+  } catch (err) {
+    const status = typeof err.status === "number" ? err.status : "unknown";
+    const msg = typeof err.body === "string" ? err.body : err.message;
+    throw new Error(`GitHub API error (${status}): ${msg}`);
   }
 
-  const data = await response.json();
   if (!Array.isArray(data.tree)) {
     throw new Error("Unexpected GitHub tree response.");
   }
@@ -74,9 +101,24 @@ function toRawUrl(source, path) {
   return `https://raw.githubusercontent.com/${owner}/${repo}/${encodeURIComponent(branch)}/${fullPath}`;
 }
 
+async function fetchRawFile(source, path) {
+  const rawUrl = toRawUrl(source, path);
+  const fetchCached = getCache();
+  const result = await fetchCached(rawUrl, {
+    cacheKey: `raw-file:${source.owner}/${source.repo}@${source.branch}:${path}`,
+    responseType: "text",
+    ttlMs: 15 * 60 * 1000,
+    negativeTtlMs: 60 * 1000,
+    minRequestIntervalMs: 5 * 1000,
+    staleWhileRevalidate: true,
+  });
+  return result;
+}
+
 window.PortalApi = {
   parseGitHubUrl,
   resolveSource,
   fetchTree,
+  fetchRawFile,
   toRawUrl,
 };

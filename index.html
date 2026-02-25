@@ -39,9 +39,17 @@
 
       <section class="panel content-panel">
         <h2 id="viewerTitle">Document Viewer</h2>
-        <article id="viewer" class="viewer">
-          <p class="hint">Select a file from the left panel.</p>
-        </article>
+        <div class="content-layout">
+          <article id="viewer" class="viewer">
+            <p class="hint">Select a file from the left panel.</p>
+          </article>
+          <aside id="tocPanel" class="toc-panel" aria-label="On this page">
+            <h3>On This Page</h3>
+            <nav id="tocNav" class="toc-nav">
+              <p class="hint">No headers available.</p>
+            </nav>
+          </aside>
+        </div>
         <div id="meta" class="meta">No file selected.</div>
       </section>
     </div>
@@ -50,6 +58,7 @@
   <script defer src="./js/core/state.js"></script>
   <script defer src="./js/core/dom.js"></script>
   <script defer src="./js/core/utils.js"></script>
+  <script defer src="./js/core/cache.js"></script>
   <script defer src="./js/core/api.js"></script>
   <script defer src="./js/components/tree.js"></script>
   <script defer src="./js/components/viewer.js"></script>

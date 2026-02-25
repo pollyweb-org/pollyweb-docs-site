@@ -3,7 +3,7 @@
   const state = window.PortalState;
   const dom = window.PortalDom;
   const { escapeHtml, isMarkdown } = window.PortalUtils;
-  const { fetchTree, resolveSource, toRawUrl } = window.PortalApi;
+  const { fetchTree, resolveSource, fetchRawFile, toRawUrl } = window.PortalApi;
   const setStatus = window.setPortalStatus;
   const workspaceEl = document.getElementById("workspace");
   const treePanelEl = document.getElementById("treePanel");
@@ -23,8 +23,10 @@
     state,
     viewerEl: dom.viewerEl,
     viewerTitleEl: dom.viewerTitleEl,
+    tocNavEl: dom.tocNavEl,
     metaEl: dom.metaEl,
     setStatus,
+    fetchRawFile,
     toRawUrl,
     renderTree: tree.renderTree,
   });
@@ -33,7 +35,7 @@
     if (!workspaceEl || !treePanelEl || !dividerEl) return;
 
     const MIN_TREE_WIDTH = 160;
-    const MIN_CONTENT_WIDTH = 320;
+    const MIN_CONTENT_WIDTH = 520;
     const KEYBOARD_STEP = 24;
     let isDragging = false;
 
