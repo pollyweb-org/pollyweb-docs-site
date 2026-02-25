@@ -36,8 +36,8 @@
 
 .toc-panel {
   width: var(--toc-width);
-  min-width: 220px;
-  border-left: 1px solid var(--border);
+  min-width: 154px;
+  border-left: 0;
   background: var(--toc-bg);
   padding: 14px 12px;
   overflow: auto;
@@ -476,6 +476,18 @@
 
 .viewer thead th a {
   font-weight: 700;
+}
+
+.viewer table a[href]:not([href=""]) {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.viewer table a[href]:not([href=""]) code {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
 }
 
 .viewer a[href]:not([href=""]) {
