@@ -49,6 +49,10 @@
     repoHomeBtnEl.href = REPO_HOME_URL;
   }
 
+  function getContentExpandBtnEl() {
+    return document.getElementById("contentExpandBtn");
+  }
+
   function setTreePanelCollapsed(collapsed) {
     if (!workspaceEl) return;
     isTreePanelCollapsed = collapsed;
@@ -65,11 +69,12 @@
     if (!workspaceEl) return;
     isContentExpanded = expanded;
     workspaceEl.classList.toggle("content-expanded", expanded);
-    if (dom.contentExpandBtnEl) {
+    const contentExpandBtnEl = getContentExpandBtnEl();
+    if (contentExpandBtnEl) {
       const label = expanded ? "Return to normal view" : "Expand content";
-      dom.contentExpandBtnEl.innerHTML = expanded ? RESTORE_CONTENT_ICON : EXPAND_CONTENT_ICON;
-      dom.contentExpandBtnEl.setAttribute("aria-label", label);
-      dom.contentExpandBtnEl.setAttribute("data-tooltip", label);
+      contentExpandBtnEl.innerHTML = expanded ? RESTORE_CONTENT_ICON : EXPAND_CONTENT_ICON;
+      contentExpandBtnEl.setAttribute("aria-label", label);
+      contentExpandBtnEl.setAttribute("data-tooltip", label);
     }
   }
 
@@ -352,7 +357,7 @@
       }
     } catch (err) {
       dom.treeEl.innerHTML = "";
-      dom.metaEl.textContent = "Load failed.";
+      dom.metaEl.textContent = "";
       renderFinalLoadError(err);
     }
   }
@@ -368,8 +373,12 @@
     });
   }
 
-  if (dom.contentExpandBtnEl) {
-    dom.contentExpandBtnEl.addEventListener("click", () => {
+  if (dom.metaEl) {
+    dom.metaEl.addEventListener("click", (event) => {
+      const target = event.target && typeof event.target.closest === "function"
+        ? event.target.closest("#contentExpandBtn")
+        : null;
+      if (!target) return;
       setContentExpanded(!isContentExpanded);
     });
   }

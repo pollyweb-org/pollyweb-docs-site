@@ -15,11 +15,20 @@ window.createViewerComponent = function createViewerComponent(options) {
   }
 
   function renderMetaActions(editUrl, path, anchor = "") {
+    const isExpanded = Boolean(document.getElementById("workspace")?.classList.contains("content-expanded"));
+    const expandLabel = isExpanded ? "Return to normal view" : "Expand content";
+    const expandIcon = isExpanded
+      ? '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 6h3V3M9.5 3h3v3M3.5 10h3v3M9.5 13h3v-3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      : '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 2.75H2.75V6M10 2.75h3.25V6M6 13.25H2.75V10M10 13.25h3.25V10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
     metaEl.innerHTML = [
       '<span class="meta-actions">',
-      `<a href="${editUrl}" target="_blank" rel="noreferrer">Source</a>`,
+      `<a href="${editUrl}" target="_blank" rel="noreferrer" class="meta-edit-btn" aria-label="Edit this page on GitHub" data-tooltip="Edit this page on GitHub"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17.25 9.81-9.81 3.75 3.75L6.75 21H3zM20.71 7.04a1 1 0 0 0 0-1.42L18.37 3.3a1 1 0 0 0-1.42 0l-1.67 1.67 3.75 3.75z" fill="currentColor"/></svg></a>`,
       '<button type="button" class="meta-refresh-btn" aria-label="Refresh page content cache" data-tooltip="Refresh content">',
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.146 4.854l-1.489 1.489A8 8 0 1 0 12 20a8.094 8.094 0 0 0 7.371-4.886 1 1 0 1 0-1.842-.779A6.071 6.071 0 0 1 12 18a6 6 0 1 1 4.243-10.243l-1.39 1.39a.5.5 0 0 0 .354.854H19.5A.5.5 0 0 0 20 9.5V5.207a.5.5 0 0 0-.854-.353z" fill="currentColor"/></svg>',
+      "</button>",
+      `<button id="contentExpandBtn" type="button" class="meta-expand-btn" aria-controls="treePanel tocPanel" aria-label="${expandLabel}" data-tooltip="${expandLabel}">`,
+      expandIcon,
       "</button>",
       "</span>",
     ].join("");
