@@ -31,11 +31,11 @@
   scrollbar-width: auto;
   scrollbar-color: var(--scrollbar-thumb-2) var(--scrollbar-track);
   line-height: 1.58;
-  padding: 18px 56px 18px 18px;
+  padding: 18px;
 }
 
 .toc-panel {
-  width: 260px;
+  width: var(--toc-width);
   min-width: 220px;
   border-left: 1px solid var(--border);
   background: var(--toc-bg);
@@ -122,9 +122,9 @@
   font-size: 1.25em;
 }
 
-.viewer h1 a,
-.viewer h2 a,
-.viewer h3 a {
+.viewer h1 a[href]:not([href=""]),
+.viewer h2 a[href]:not([href=""]),
+.viewer h3 a[href]:not([href=""]) {
   font-family: inherit;
   font-size: inherit;
   font-weight: inherit;
@@ -133,9 +133,9 @@
   text-decoration: none !important;
 }
 
-.viewer h1 a:hover,
-.viewer h2 a:hover,
-.viewer h3 a:hover {
+.viewer h1 a[href]:not([href=""]):hover,
+.viewer h2 a[href]:not([href=""]):hover,
+.viewer h3 a[href]:not([href=""]):hover {
   color: var(--link-hover);
   background: transparent;
 }
@@ -478,21 +478,21 @@
   font-weight: 700;
 }
 
-.viewer a {
+.viewer a[href]:not([href=""]) {
   color: var(--link);
   text-decoration: none !important;
   font-weight: 500;
   transition: color 160ms ease, background-color 160ms ease;
 }
 
-.viewer a:hover {
+.viewer a[href]:not([href=""]):hover {
   color: var(--link-hover);
   text-decoration: none !important;
   background: var(--link-hover-bg);
   border-radius: 4px;
 }
 
-.viewer a:focus-visible {
+.viewer a[href]:not([href=""]):focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
