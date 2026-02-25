@@ -97,9 +97,9 @@ body.resizing-panels * {
   user-select: none;
 }
 
-.panel h2 {
+#viewerTitle {
   margin: 0;
-  padding: 13px 220px 13px 52px;
+  padding: 16px 220px 20px 52px;
   font-size: 14px;
   line-height: 1;
   color: var(--muted);
@@ -288,7 +288,7 @@ body.resizing-panels * {
 .meta-edit-btn::after {
   content: attr(data-tooltip);
   position: absolute;
-  right: 0;
+  right: -38px;
   top: calc(100% + 8px);
   transform: none;
   pointer-events: none;
@@ -362,7 +362,7 @@ body.resizing-panels * {
 .meta-refresh-btn::after {
   content: attr(data-tooltip);
   position: absolute;
-  right: 0;
+  right: -38px;
   top: calc(100% + 8px);
   transform: none;
   pointer-events: none;
@@ -381,7 +381,7 @@ body.resizing-panels * {
 .meta-expand-btn::after {
   content: attr(data-tooltip);
   position: absolute;
-  right: 0;
+  right: -38px;
   top: calc(100% + 8px);
   transform: none;
   pointer-events: none;
@@ -466,7 +466,7 @@ body.resizing-panels * {
     display: block;
   }
 
-  .panel h2 {
+  #viewerTitle {
     padding-left: 52px;
     padding-right: 160px;
   }

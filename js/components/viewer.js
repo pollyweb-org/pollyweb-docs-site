@@ -23,12 +23,12 @@ window.createViewerComponent = function createViewerComponent(options) {
 
     metaEl.innerHTML = [
       '<span class="meta-actions">',
+      `<button id="contentExpandBtn" type="button" class="meta-expand-btn" aria-controls="treePanel tocPanel" aria-label="${expandLabel}" data-tooltip="${expandLabel}">`,
+      expandIcon,
+      "</button>",
       `<a href="${editUrl}" target="_blank" rel="noreferrer" class="meta-edit-btn" aria-label="Edit this page on GitHub" data-tooltip="Edit this page on GitHub"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17.25 9.81-9.81 3.75 3.75L6.75 21H3zM20.71 7.04a1 1 0 0 0 0-1.42L18.37 3.3a1 1 0 0 0-1.42 0l-1.67 1.67 3.75 3.75z" fill="currentColor"/></svg></a>`,
       '<button type="button" class="meta-refresh-btn" aria-label="Refresh page content cache" data-tooltip="Refresh content">',
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.146 4.854l-1.489 1.489A8 8 0 1 0 12 20a8.094 8.094 0 0 0 7.371-4.886 1 1 0 1 0-1.842-.779A6.071 6.071 0 0 1 12 18a6 6 0 1 1 4.243-10.243l-1.39 1.39a.5.5 0 0 0 .354.854H19.5A.5.5 0 0 0 20 9.5V5.207a.5.5 0 0 0-.854-.353z" fill="currentColor"/></svg>',
-      "</button>",
-      `<button id="contentExpandBtn" type="button" class="meta-expand-btn" aria-controls="treePanel tocPanel" aria-label="${expandLabel}" data-tooltip="${expandLabel}">`,
-      expandIcon,
       "</button>",
       "</span>",
     ].join("");
@@ -74,6 +74,18 @@ window.createViewerComponent = function createViewerComponent(options) {
       .toLowerCase();
   }
 
+  function isReadmeFile(name) {
+    return /^readme(\.[^/.]+)?$/i.test(name);
+  }
+
+  function createHomeIcon() {
+    const span = document.createElement("span");
+    span.className = "breadcrumb-home-icon";
+    span.innerHTML =
+      '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.2 7.1 8 2.5l5.8 4.6v6.2a.7.7 0 0 1-.7.7h-3.3V9.5H6.2V14H2.9a.7.7 0 0 1-.7-.7V7.1Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>';
+    return span;
+  }
+
   function getVisibleFiles() {
     const query = state.treeSearch.trim().toLowerCase();
     if (!query) return state.files;
@@ -102,11 +114,13 @@ window.createViewerComponent = function createViewerComponent(options) {
     viewerTitleEl.textContent = "";
     const parts = path.split("/");
     const crumbs = [];
+    const isTopLevelReadmePath = parts.length === 1 && isReadmeFile(parts[0] || "");
     const hideParentFolder = shouldHideParentFolder(path) || shouldHideParentBecauseSameName(path);
 
     crumbs.push({
-      label: "home",
+      label: "Home",
       targetPath: findFileForDirectory(""),
+      isHome: true,
     });
 
     for (let i = 0; i < parts.length; i += 1) {
@@ -115,6 +129,10 @@ window.createViewerComponent = function createViewerComponent(options) {
       }
       const currentPath = parts.slice(0, i + 1).join("/");
       const isFile = i === parts.length - 1;
+      const isTopLevelReadme = isFile && parts.length === 1 && isReadmeFile(parts[i]);
+      if (isTopLevelReadme) {
+        continue;
+      }
       crumbs.push({
         label: formatBreadcrumbLabel(parts[i], isFile),
         targetPath: isFile ? currentPath : findFileForDirectory(currentPath),
@@ -143,7 +161,19 @@ window.createViewerComponent = function createViewerComponent(options) {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "breadcrumb-btn";
-        button.textContent = crumb.label;
+        if (crumb.isHome) {
+          button.appendChild(createHomeIcon());
+          if (isTopLevelReadmePath) {
+            const label = document.createElement("span");
+            label.textContent = crumb.label;
+            button.appendChild(label);
+          } else {
+            button.setAttribute("aria-label", "Home");
+            button.setAttribute("data-tooltip", "Home");
+          }
+        } else {
+          button.textContent = crumb.label;
+        }
         if (crumb.targetPath === path) {
           button.classList.add("active");
         }
@@ -380,9 +410,9 @@ window.createViewerComponent = function createViewerComponent(options) {
       .replace(/\s+/g, "-");
   }
 
-  function renderEmptyToc(message) {
+  function renderEmptyToc(message = "") {
     if (!tocNavEl) return;
-    tocNavEl.innerHTML = `<p class="hint">${escapeHtml(message)}</p>`;
+    tocNavEl.innerHTML = message ? `<p class="hint">${escapeHtml(message)}</p>` : "";
   }
 
   function setTocPanelVisible(visible) {
@@ -415,7 +445,7 @@ window.createViewerComponent = function createViewerComponent(options) {
     const headings = Array.from(viewerEl.querySelectorAll("h1, h2, h3, h4"));
     if (!headings.length) {
       setTocPanelVisible(false);
-      renderEmptyToc("No headers available.");
+      renderEmptyToc();
       return;
     }
 
@@ -442,7 +472,7 @@ window.createViewerComponent = function createViewerComponent(options) {
 
     if (!items.length) {
       setTocPanelVisible(false);
-      renderEmptyToc("No headers available.");
+      renderEmptyToc();
       return;
     }
 
@@ -636,7 +666,7 @@ window.createViewerComponent = function createViewerComponent(options) {
         void openFile(path, anchor, { historyMode: "replace" });
       });
       setTocPanelVisible(false);
-      renderEmptyToc("No headers available.");
+      renderEmptyToc();
       metaEl.innerHTML = "";
       setStatus(`Failed to load ${path}`, true);
     } finally {

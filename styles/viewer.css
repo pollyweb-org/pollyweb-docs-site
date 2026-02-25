@@ -97,6 +97,49 @@
   margin-top: 0;
 }
 
+.viewer h1,
+.viewer h2,
+.viewer h3 {
+  font-family: var(--font-heading);
+  line-height: 1.2;
+}
+
+.viewer * + h1,
+.viewer * + h2,
+.viewer * + h3 {
+  margin-top: 1.8em;
+}
+
+.viewer h1 {
+  font-size: 2em;
+}
+
+.viewer h2 {
+  font-size: 1.5em;
+}
+
+.viewer h3 {
+  font-size: 1.25em;
+}
+
+.viewer h1 a,
+.viewer h2 a,
+.viewer h3 a {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  color: #9fc5f2;
+  text-decoration: none !important;
+}
+
+.viewer h1 a:hover,
+.viewer h2 a:hover,
+.viewer h3 a:hover {
+  color: #c7ddf7;
+  background: transparent;
+}
+
 .viewer-load-state {
   max-width: 700px;
   margin: 28px auto;
@@ -320,6 +363,9 @@
   font-weight: 400;
   padding: 0;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .breadcrumb-btn:hover {
@@ -338,6 +384,19 @@
 .breadcrumb-text {
   color: var(--text);
   font-weight: 400;
+}
+
+.breadcrumb-home-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  color: #89919e;
+}
+
+.breadcrumb-home-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .viewer::-webkit-scrollbar {
@@ -445,6 +504,14 @@
   border-radius: 8px;
 }
 
+.viewer blockquote > :first-child {
+  margin-top: 0;
+}
+
+.viewer blockquote > :last-child {
+  margin-bottom: 0;
+}
+
 .viewer hr {
   border: 0;
   border-top: 1px solid var(--border);
@@ -481,11 +548,3 @@
     font-size: 14px;
   }
 }
-.viewer blockquote > :first-child {
-  margin-top: 0;
-}
-
-.viewer blockquote > :last-child {
-  margin-bottom: 0;
-}
-

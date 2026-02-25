@@ -296,7 +296,7 @@
 
   async function loadRepository() {
     try {
-      dom.viewerEl.innerHTML = '<p class="hint">Loading document tree...</p>';
+      dom.viewerEl.innerHTML = "";
       const { source, treeResult } = await loadSourceWithRetry();
       state.source = source;
       state.files = [];
