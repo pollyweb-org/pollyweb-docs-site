@@ -499,13 +499,13 @@
 }
 
 .viewer table a[href]:not([href=""]) {
-  font-family: inherit;
+  font-family: var(--font-body);
   font-size: inherit;
   font-weight: inherit;
 }
 
 .viewer table a[href]:not([href=""]) code {
-  font-family: inherit;
+  font-family: var(--font-body);
   font-size: inherit;
   font-weight: inherit;
 }
