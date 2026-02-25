@@ -61,6 +61,15 @@
           state.collapsedPaths.add(current);
         }
       }
+
+      if (state.initialPage && state.files.includes(state.initialPage)) {
+        const parts = state.initialPage.split("/");
+        let current = "";
+        for (let i = 0; i < parts.length - 1; i += 1) {
+          current = current ? `${current}/${parts[i]}` : parts[i];
+          state.collapsedPaths.delete(current);
+        }
+      }
       tree.renderTree(viewer.openFile);
 
       if (truncated) {
@@ -74,7 +83,11 @@
         state.files.find((p) => p.toLowerCase().endsWith("/readme.md")) ||
         state.files[0];
 
-      if (firstDoc) {
+      const initialDoc = state.initialPage && state.files.includes(state.initialPage) ? state.initialPage : "";
+
+      if (initialDoc) {
+        viewer.openFile(initialDoc, state.initialAnchor);
+      } else if (firstDoc) {
         viewer.openFile(firstDoc);
       }
     } catch (err) {

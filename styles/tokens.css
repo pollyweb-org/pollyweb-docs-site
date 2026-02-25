@@ -1,4 +1,6 @@
 :root {
+  --font-body: "DM Sans", "Avenir Next", "Segoe UI", sans-serif;
+  --font-heading: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
   --bg: #111317;
   --bg-2: #171b21;
   --panel: rgba(28, 32, 40, 0.9);
@@ -24,7 +26,7 @@ body {
 
 body {
   margin: 0;
-  font-family: "DM Sans", "Avenir Next", "Segoe UI", sans-serif;
+  font-family: var(--font-body);
   color: var(--text);
   background:
     radial-gradient(circle at 18% 10%, rgba(136, 149, 170, 0.2) 0%, transparent 34%),
@@ -33,6 +35,15 @@ body {
     var(--bg);
   min-height: 100vh;
   overflow: hidden;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
 }
 
 .hint {

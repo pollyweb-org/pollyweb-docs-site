@@ -101,6 +101,17 @@ window.createViewerComponent = function createViewerComponent(options) {
     }
   }
 
+  function updateLocation(path, anchor = "") {
+    const url = new URL(window.location.href);
+    if (path) {
+      url.searchParams.set("page", path);
+    } else {
+      url.searchParams.delete("page");
+    }
+    url.hash = anchor ? `#${encodeURIComponent(anchor)}` : "";
+    history.replaceState(null, "", url);
+  }
+
   function processRenderedContent(currentVisiblePath, onOpenFile) {
     if (!state.source) return;
     const { source } = state;
@@ -127,7 +138,7 @@ window.createViewerComponent = function createViewerComponent(options) {
           event.preventDefault();
           const anchor = decodeURIComponent(href.slice(1));
           scrollToAnchor(anchor);
-          history.replaceState(null, "", `#${encodeURIComponent(anchor)}`);
+          updateLocation(state.activePath || currentVisiblePath, anchor);
         });
         continue;
       }
@@ -176,11 +187,9 @@ window.createViewerComponent = function createViewerComponent(options) {
       viewerEl.innerHTML = window.marked.parse(text);
       processRenderedContent(path, openFile);
       scrollToAnchor(anchor || state.initialAnchor);
-      if (anchor || state.initialAnchor) {
-        const activeAnchor = anchor || state.initialAnchor;
-        history.replaceState(null, "", `#${encodeURIComponent(activeAnchor)}`);
-        state.initialAnchor = "";
-      }
+      const activeAnchor = anchor || state.initialAnchor;
+      updateLocation(path, activeAnchor);
+      state.initialAnchor = "";
 
       metaEl.innerHTML = `Source: <a href="${rawUrl}" target="_blank" rel="noreferrer">raw file</a>`;
       setStatus(`Loaded ${path}`);
