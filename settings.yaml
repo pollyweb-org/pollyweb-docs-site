@@ -1,0 +1,15 @@
+Instructions:
+  - only show the files and folders listed in the "Show" section
+  - hide all other files and folders, including those listed in the "Hide" section
+  - the * means all files in a folder
+  - the */* means all files in all subfolders of a folder
+  - consider that the sections Show+Hide of the "settings.yaml" may change with commits 
+  - thus, the portal needs to read the file in runtime, and decide what to do on the fly
+  - in other words, don't hardcode what is to show or hide
+Show:
+  - /README.md
+  - /1 🎯 Mission/*/*
+  - /2 🏔️ Landscape/*/*
+  - /4 ⚙️ Solution/*/*
+Hide: 
+  - 

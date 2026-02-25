@@ -378,6 +378,113 @@
     });
   }
 
+  function normalizeSettingsPattern(input) {
+    if (typeof input !== "string") return "";
+    return input.trim().replace(/^\/+/, "").replace(/\/+$/, "");
+  }
+
+  function parseSettingsList(raw, sectionName) {
+    const lines = raw.split(/\r?\n/);
+    const sectionPattern = new RegExp(`^\\s*${sectionName}\\s*:\\s*$`, "i");
+    const sectionStart = lines.findIndex((line) => sectionPattern.test(line));
+    if (sectionStart < 0) return [];
+
+    const items = [];
+    for (let i = sectionStart + 1; i < lines.length; i += 1) {
+      const line = lines[i];
+      if (!line.trim()) continue;
+      if (/^\s*[A-Za-z][\w-]*\s*:\s*$/.test(line)) break;
+      const itemMatch = line.match(/^\s*-\s*(.+?)\s*$/);
+      if (!itemMatch) continue;
+
+      const cleaned = itemMatch[1].replace(/^['"]|['"]$/g, "");
+      const normalized = normalizeSettingsPattern(cleaned);
+      if (normalized) items.push(normalized);
+    }
+
+    return items;
+  }
+
+  function parseVisibilitySettings(raw) {
+    if (typeof raw !== "string" || !raw.trim()) {
+      return { show: [], hide: [] };
+    }
+    return {
+      show: parseSettingsList(raw, "Show"),
+      hide: parseSettingsList(raw, "Hide"),
+    };
+  }
+
+  function escapeRegex(input) {
+    return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  function toWildcardRegex(pattern) {
+    const normalized = normalizeSettingsPattern(pattern);
+    if (!normalized) return null;
+
+    if (normalized.endsWith("/*/*")) {
+      const base = normalized.slice(0, -4);
+      const escapedBase = escapeRegex(base);
+      return new RegExp(`^${escapedBase}/[^/]+(?:/.*)?$`);
+    }
+
+    if (normalized.endsWith("/*")) {
+      const base = normalized.slice(0, -2);
+      const escapedBase = escapeRegex(base);
+      return new RegExp(`^${escapedBase}/[^/]+$`);
+    }
+
+    const segments = normalized.split("/").map((segment) => {
+      if (segment === "*") return "[^/]+";
+      return escapeRegex(segment);
+    });
+    return new RegExp(`^${segments.join("/")}$`);
+  }
+
+  function matchesSettingsPattern(path, pattern) {
+    const regex = toWildcardRegex(pattern);
+    if (!regex) return false;
+    return regex.test(path);
+  }
+
+  function applyVisibilitySettings(files, settings) {
+    const show = Array.isArray(settings && settings.show) ? settings.show : [];
+    const hide = Array.isArray(settings && settings.hide) ? settings.hide : [];
+
+    if (!show.length && !hide.length) return files;
+
+    const filtered = files.filter((path) => {
+      const shown = !show.length || show.some((pattern) => matchesSettingsPattern(path, pattern));
+      if (!shown) return false;
+      const hidden = hide.some((pattern) => matchesSettingsPattern(path, pattern));
+      return !hidden;
+    });
+
+    return filtered;
+  }
+
+  async function fetchVisibilitySettingsFromUrl(url) {
+    const response = await fetch(url, {
+      cache: "no-store",
+    });
+    if (!response.ok) return null;
+    const raw = await response.text();
+    return parseVisibilitySettings(raw);
+  }
+
+  async function loadVisibilitySettings(source) {
+    const sourceSettingsUrl = toRawUrl(source, "settings.yaml");
+    const fromSource = await fetchVisibilitySettingsFromUrl(sourceSettingsUrl);
+    if (fromSource) return fromSource;
+
+    const localSettingsUrl = "./settings.yaml";
+    const fromLocal = await fetchVisibilitySettingsFromUrl(localSettingsUrl);
+    if (fromLocal) return fromLocal;
+
+    throw new Error("Could not load settings.yaml from source repo or local site.");
+  }
+
   function extractLoadErrorInfo(error) {
     const raw = error && error.message ? String(error.message) : "";
     const statusMatch = raw.match(/\((\d{3})\)/);
@@ -515,6 +622,12 @@
       dom.viewerEl.innerHTML = "";
       const { source, treeResult } = await loadSourceWithRetry();
       state.source = source;
+      let visibilitySettings = { show: [], hide: [] };
+      try {
+        visibilitySettings = await loadVisibilitySettings(source);
+      } catch (settingsError) {
+        setStatus(settingsError.message, true);
+      }
       state.files = [];
       state.activePath = null;
       state.treeSearch = "";
@@ -532,7 +645,7 @@
         .filter((path) => isMarkdown(path))
         .filter(Boolean);
 
-      state.files = files.sort((a, b) => a.localeCompare(b));
+      state.files = applyVisibilitySettings(files, visibilitySettings).sort((a, b) => a.localeCompare(b));
       state.collapsedPaths.clear();
       for (const filePath of state.files) {
         const parts = filePath.split("/");
