@@ -353,12 +353,12 @@ window.createViewerComponent = function createViewerComponent(options) {
   }
 
   function isLikelyVideoLink(linkEl, url) {
+    if (isRepoUserAttachmentUrl(url)) return true;
+
     if (isVideoUrl(url)) return true;
 
     const label = (linkEl.textContent || "").trim();
     if (isVideoUrl(label)) return true;
-
-    if (isRepoUserAttachmentUrl(url) && isVideoUrl(label)) return true;
 
     return false;
   }
@@ -577,7 +577,7 @@ window.createViewerComponent = function createViewerComponent(options) {
       const src = (img.getAttribute("src") || "").trim();
       if (!src) continue;
       if (/^(https?:|data:|blob:|\/\/)/i.test(src)) {
-        if (isVideoUrl(src)) {
+        if (isVideoUrl(src) || isRepoUserAttachmentUrl(src)) {
           replaceImageWithVideo(img, src);
         }
         continue;
