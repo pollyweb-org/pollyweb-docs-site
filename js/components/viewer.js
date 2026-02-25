@@ -568,9 +568,31 @@ window.createViewerComponent = function createViewerComponent(options) {
     }
   }
 
+  function isVisuallyEmptyTableRow(row) {
+    const cells = Array.from(row.cells || []);
+    if (!cells.length) return false;
+    return cells.every((cell) => {
+      if ((cell.textContent || "").trim()) return false;
+      return !cell.querySelector("img, video, iframe, object, embed, input, textarea, select, button");
+    });
+  }
+
+  function trimTrailingEmptyTableRows(rootEl) {
+    const tables = rootEl.querySelectorAll("table");
+    for (const table of tables) {
+      const section = table.tBodies.length ? table.tBodies[table.tBodies.length - 1] : table;
+      while (section.rows.length) {
+        const lastRow = section.rows[section.rows.length - 1];
+        if (!isVisuallyEmptyTableRow(lastRow)) break;
+        lastRow.remove();
+      }
+    }
+  }
+
   function processRenderedContent(currentVisiblePath, onOpenFile) {
     if (!state.source) return;
     const { source } = state;
+    trimTrailingEmptyTableRows(viewerEl);
 
     const images = viewerEl.querySelectorAll("img[src]");
     for (const img of images) {

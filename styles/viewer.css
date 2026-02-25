@@ -474,7 +474,11 @@
 .viewer thead th {
   background: transparent;
   font-weight: 700;
-  border-bottom: 2px solid var(--border);
+  border-bottom: 3px solid var(--border);
+}
+
+.viewer table thead + tbody tr:first-child > * {
+  border-top: 3px solid var(--border);
 }
 
 .viewer table tr:last-child > td,
