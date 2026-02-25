@@ -427,8 +427,8 @@
 }
 
 .viewer blockquote {
-  margin: 14px 0;
-  padding: 10px 14px;
+  margin: 0;
+  padding: 8px 12px;
   border-left: 3px solid var(--accent);
   background: rgba(138, 145, 157, 0.09);
   border-radius: 8px;
@@ -470,3 +470,11 @@
     font-size: 14px;
   }
 }
+.viewer blockquote > :first-child {
+  margin-top: 0;
+}
+
+.viewer blockquote > :last-child {
+  margin-bottom: 0;
+}
+
