@@ -93,19 +93,129 @@
     );
   }
 
+  function sleep(ms) {
+    return new Promise((resolve) => {
+      window.setTimeout(resolve, ms);
+    });
+  }
+
+  function extractGitHubErrorInfo(error) {
+    const raw = error && error.message ? String(error.message) : "";
+    const statusMatch = raw.match(/\((\d{3})\)/);
+    const status = statusMatch ? Number(statusMatch[1]) : null;
+
+    let payload = null;
+    const jsonStart = raw.indexOf("{");
+    if (jsonStart >= 0) {
+      const jsonPart = raw.slice(jsonStart);
+      try {
+        payload = JSON.parse(jsonPart);
+      } catch {
+        payload = null;
+      }
+    }
+
+    const payloadMessage =
+      payload && typeof payload.message === "string" ? payload.message : "";
+    const combined = `${raw} ${payloadMessage}`.toLowerCase();
+
+    return {
+      status,
+      payload,
+      message: payloadMessage || raw,
+      isRateLimit:
+        combined.includes("api rate limit exceeded") ||
+        combined.includes("secondary rate limit") ||
+        combined.includes("rate limit"),
+    };
+  }
+
+  function shouldRetryGitHubLoad(error) {
+    const info = extractGitHubErrorInfo(error);
+    if (info.isRateLimit) return true;
+    if (info.status === 429) return true;
+    if (typeof info.status === "number" && info.status >= 500 && info.status <= 599) return true;
+    return false;
+  }
+
+  function renderRetryState(owner, repo, branch, attempt, maxRetries, nextDelayMs, reason) {
+    const retryLabel = `${attempt}/${maxRetries}`;
+    const nextSeconds = Math.ceil(nextDelayMs / 1000);
+    const branchLabel = branch || "default-branch";
+    dom.viewerEl.innerHTML = `
+      <div class="viewer-load-state" role="status" aria-live="polite">
+        <div class="hourglass" aria-hidden="true">⌛</div>
+        <h3>GitHub is under heavy load</h3>
+        <p>We're retrying in the background with exponential backoff.</p>
+        <p class="muted">Target: ${escapeHtml(owner)}/${escapeHtml(repo)}@${escapeHtml(branchLabel)} | Retry ${retryLabel} in ${nextSeconds}s.</p>
+        <p class="muted">Reason: ${escapeHtml(reason)}</p>
+      </div>
+    `;
+  }
+
+  function renderFinalLoadError(error) {
+    const info = extractGitHubErrorInfo(error);
+    const isRateLimitLike = info.isRateLimit || info.status === 429;
+    if (isRateLimitLike) {
+      dom.viewerEl.innerHTML = `
+        <div class="viewer-load-state load-error">
+          <div class="hourglass" aria-hidden="true">⌛</div>
+          <h3>GitHub is temporarily overloaded</h3>
+          <p>We retried automatically with exponential backoff, but GitHub is still rate-limiting requests.</p>
+          <p class="muted">Please wait a bit and reload. Authenticated GitHub requests also raise the limit.</p>
+        </div>
+      `;
+      setStatus("GitHub rate-limited this request. Retries were exhausted.", true);
+      return;
+    }
+
+    dom.viewerEl.innerHTML = `<p class="hint">${escapeHtml(error.message)}</p>`;
+    setStatus(error.message, true);
+  }
+
+  async function loadSourceWithRetry() {
+    const parsed = window.PortalApi.parseGitHubUrl(STATIC_SOURCE_URL);
+    const owner = parsed.owner;
+    const repo = parsed.repo;
+    const maxRetries = 4;
+    const baseDelayMs = 1000;
+
+    let attempt = 0;
+    while (attempt <= maxRetries) {
+      try {
+        const source = await resolveSource(STATIC_SOURCE_URL);
+        setStatus(`Fetching tree for ${source.owner}/${source.repo}@${source.branch} ...`);
+        const treeResult = await fetchTree(source);
+        return { source, treeResult };
+      } catch (error) {
+        if (!shouldRetryGitHubLoad(error) || attempt === maxRetries) {
+          throw error;
+        }
+
+        const delayMs = baseDelayMs * (2 ** attempt);
+        const reason = extractGitHubErrorInfo(error).message || "Temporary GitHub API failure";
+        const branch = state.source && state.source.branch ? state.source.branch : parsed.branch;
+        renderRetryState(owner, repo, branch, attempt + 1, maxRetries, delayMs, reason);
+        setStatus(`GitHub is busy. Retrying ${attempt + 1}/${maxRetries} in ${Math.ceil(delayMs / 1000)}s ...`, true);
+        await sleep(delayMs);
+        attempt += 1;
+      }
+    }
+
+    throw new Error("Repository load retries exhausted.");
+  }
+
   async function loadRepository() {
     try {
-      const source = await resolveSource(STATIC_SOURCE_URL);
+      dom.viewerEl.innerHTML = '<p class="hint">Loading document tree...</p>';
+      const { source, treeResult } = await loadSourceWithRetry();
       state.source = source;
       state.files = [];
       state.activePath = null;
       state.treeSearch = "";
       dom.treeSearchEl.value = "";
-      dom.viewerEl.innerHTML = '<p class="hint">Loading document tree...</p>';
       dom.metaEl.textContent = "No file selected.";
-      setStatus(`Fetching tree for ${source.owner}/${source.repo}@${source.branch} ...`);
-
-      const { tree: fullTree, truncated } = await fetchTree(source);
+      const { tree: fullTree, truncated } = treeResult;
       const prefix = source.rootPath ? `${source.rootPath}/` : "";
 
       const files = fullTree
@@ -155,9 +265,8 @@
       }
     } catch (err) {
       dom.treeEl.innerHTML = "";
-      dom.viewerEl.innerHTML = `<p class="hint">${escapeHtml(err.message)}</p>`;
       dom.metaEl.textContent = "Load failed.";
-      setStatus(err.message, true);
+      renderFinalLoadError(err);
     }
   }
 

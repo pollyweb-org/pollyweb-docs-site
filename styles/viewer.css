@@ -66,6 +66,57 @@
   margin-top: 0;
 }
 
+.viewer-load-state {
+  max-width: 700px;
+  margin: 28px auto;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(26, 31, 40, 0.75);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+}
+
+.viewer-load-state .hourglass {
+  display: inline-block;
+  font-size: 26px;
+  line-height: 1;
+  animation: hourglass-pulse 1.15s ease-in-out infinite;
+}
+
+.viewer-load-state h3 {
+  margin: 10px 0 8px;
+  font-size: 19px;
+  color: var(--text);
+}
+
+.viewer-load-state p {
+  margin: 8px 0;
+}
+
+.viewer-load-state .muted {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.viewer-load-state.load-error {
+  border-color: rgba(176, 0, 32, 0.45);
+}
+
+@keyframes hourglass-pulse {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0.92;
+  }
+  50% {
+    transform: translateY(-1px) scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.92;
+  }
+}
+
 #viewerTitle {
   display: flex;
   align-items: center;
