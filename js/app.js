@@ -229,7 +229,7 @@
 
     function applyTreeWidth(width) {
       const workspaceRect = workspaceEl.getBoundingClientRect();
-      const dividerWidth = dividerEl.getBoundingClientRect().width || 10;
+      const dividerWidth = dividerEl.getBoundingClientRect().width || 6;
       const maxTreeWidth = Math.max(MIN_TREE_WIDTH, workspaceRect.width - MIN_CONTENT_WIDTH - dividerWidth);
       const clamped = Math.min(Math.max(width, MIN_TREE_WIDTH), maxTreeWidth);
       workspaceEl.style.setProperty("--tree-width", `${clamped}px`);
@@ -292,14 +292,14 @@
   function initTocPanelResize() {
     if (!contentLayoutEl || !tocPanelEl || !tocDividerEl) return;
 
-    const MIN_TOC_WIDTH = 220;
+    const MIN_TOC_WIDTH = 154;
     const MIN_VIEWER_WIDTH = 420;
     const KEYBOARD_STEP = 24;
     let isDragging = false;
 
     function applyTocWidth(width) {
       const layoutRect = contentLayoutEl.getBoundingClientRect();
-      const dividerWidth = tocDividerEl.getBoundingClientRect().width || 10;
+      const dividerWidth = tocDividerEl.getBoundingClientRect().width || 6;
       const maxTocWidth = Math.max(MIN_TOC_WIDTH, layoutRect.width - MIN_VIEWER_WIDTH - dividerWidth);
       const clamped = Math.min(Math.max(width, MIN_TOC_WIDTH), maxTocWidth);
       contentLayoutEl.style.setProperty("--toc-width", `${clamped}px`);

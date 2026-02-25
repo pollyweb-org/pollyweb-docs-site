@@ -74,17 +74,17 @@
 }
 
 .panel-divider {
-  flex: 0 0 10px;
+  flex: 0 0 6px;
   cursor: col-resize;
   background: linear-gradient(
     90deg,
-    transparent 0,
-    transparent 4px,
-    var(--border) 4px,
-    var(--border) 6px,
-    transparent 6px,
-    transparent 100%
+    transparent calc(50% - 0.5px),
+    var(--border) calc(50% - 0.5px),
+    var(--border) calc(50% + 0.5px),
+    transparent calc(50% + 0.5px)
   );
+  border-left: 0;
+  box-shadow: none;
   user-select: none;
   touch-action: none;
 }
@@ -93,12 +93,10 @@
   outline: none;
   background: linear-gradient(
     90deg,
-    transparent 0,
-    transparent 3px,
-    var(--accent) 3px,
-    var(--accent) 7px,
-    transparent 7px,
-    transparent 100%
+    transparent calc(50% - 0.5px),
+    var(--border) calc(50% - 0.5px),
+    var(--border) calc(50% + 0.5px),
+    transparent calc(50% + 0.5px)
   );
 }
 
