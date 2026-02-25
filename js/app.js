@@ -8,6 +8,8 @@
   const workspaceEl = document.getElementById("workspace");
   const treePanelEl = document.getElementById("treePanel");
   const dividerEl = document.getElementById("panelDivider");
+  let isTreePanelCollapsed = false;
+  let isContentExpanded = false;
 
   if (!window.marked) {
     throw new Error("Marked is required but was not loaded.");
@@ -30,6 +32,39 @@
     toRawUrl,
     renderTree: tree.renderTree,
   });
+
+  const HIDE_ICON =
+    '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10.5 3.25 5.5 8l5 4.75" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const SHOW_ICON =
+    '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 3.25 10.5 8l-5 4.75" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const EXPAND_CONTENT_ICON =
+    '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 2.75H2.75V6M10 2.75h3.25V6M6 13.25H2.75V10M10 13.25h3.25V10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const RESTORE_CONTENT_ICON =
+    '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 6h3V3M9.5 3h3v3M3.5 10h3v3M9.5 13h3v-3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  function setTreePanelCollapsed(collapsed) {
+    if (!workspaceEl) return;
+    isTreePanelCollapsed = collapsed;
+    workspaceEl.classList.toggle("tree-collapsed", collapsed);
+    if (dom.treePanelToggleBtnEl) {
+      const label = collapsed ? "Show navigation" : "Hide navigation";
+      dom.treePanelToggleBtnEl.innerHTML = collapsed ? SHOW_ICON : HIDE_ICON;
+      dom.treePanelToggleBtnEl.setAttribute("aria-label", label);
+      dom.treePanelToggleBtnEl.setAttribute("data-tooltip", label);
+    }
+  }
+
+  function setContentExpanded(expanded) {
+    if (!workspaceEl) return;
+    isContentExpanded = expanded;
+    workspaceEl.classList.toggle("content-expanded", expanded);
+    if (dom.contentExpandBtnEl) {
+      const label = expanded ? "Return to normal view" : "Expand content";
+      dom.contentExpandBtnEl.innerHTML = expanded ? RESTORE_CONTENT_ICON : EXPAND_CONTENT_ICON;
+      dom.contentExpandBtnEl.setAttribute("aria-label", label);
+      dom.contentExpandBtnEl.setAttribute("data-tooltip", label);
+    }
+  }
 
   function initPanelResize() {
     if (!workspaceEl || !treePanelEl || !dividerEl) return;
@@ -54,6 +89,7 @@
     }
 
     dividerEl.addEventListener("pointerdown", (event) => {
+      if (isTreePanelCollapsed || isContentExpanded) return;
       if (window.matchMedia("(max-width: 900px)").matches) return;
       isDragging = true;
       dividerEl.setPointerCapture(event.pointerId);
@@ -76,7 +112,13 @@
     dividerEl.addEventListener("pointercancel", stopDragging);
 
     dividerEl.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        setTreePanelCollapsed(!isTreePanelCollapsed);
+        return;
+      }
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      if (isTreePanelCollapsed || isContentExpanded) return;
       event.preventDefault();
       const currentWidth = treePanelEl.getBoundingClientRect().width;
       const delta = event.key === "ArrowLeft" ? -KEYBOARD_STEP : KEYBOARD_STEP;
@@ -99,7 +141,7 @@
     });
   }
 
-  function extractGitHubErrorInfo(error) {
+  function extractLoadErrorInfo(error) {
     const raw = error && error.message ? String(error.message) : "";
     const statusMatch = raw.match(/\((\d{3})\)/);
     const status = statusMatch ? Number(statusMatch[1]) : null;
@@ -115,8 +157,11 @@
       }
     }
 
-    const payloadMessage =
-      payload && typeof payload.message === "string" ? payload.message : "";
+    const payloadMessage = payload && typeof payload.message === "string"
+      ? payload.message
+      : payload && typeof payload.error === "string"
+        ? payload.error
+        : "";
     const combined = `${raw} ${payloadMessage}`.toLowerCase();
 
     return {
@@ -130,8 +175,8 @@
     };
   }
 
-  function shouldRetryGitHubLoad(error) {
-    const info = extractGitHubErrorInfo(error);
+  function shouldRetrySourceLoad(error) {
+    const info = extractLoadErrorInfo(error);
     if (info.isRateLimit) return true;
     if (info.status === 429) return true;
     if (typeof info.status === "number" && info.status >= 500 && info.status <= 599) return true;
@@ -143,9 +188,9 @@
     const nextSeconds = Math.ceil(nextDelayMs / 1000);
     const branchLabel = branch || "default-branch";
     dom.viewerEl.innerHTML = `
-      <div class="viewer-load-state" role="status" aria-live="polite">
+        <div class="viewer-load-state" role="status" aria-live="polite">
         <div class="hourglass" aria-hidden="true">⌛</div>
-        <h3>GitHub is under heavy load</h3>
+        <h3>Docs API is under heavy load</h3>
         <p>We're retrying in the background with exponential backoff.</p>
         <p class="muted">Target: ${escapeHtml(owner)}/${escapeHtml(repo)}@${escapeHtml(branchLabel)} | Retry ${retryLabel} in ${nextSeconds}s.</p>
         <p class="muted">Reason: ${escapeHtml(reason)}</p>
@@ -154,18 +199,18 @@
   }
 
   function renderFinalLoadError(error) {
-    const info = extractGitHubErrorInfo(error);
+    const info = extractLoadErrorInfo(error);
     const isRateLimitLike = info.isRateLimit || info.status === 429;
     if (isRateLimitLike) {
       dom.viewerEl.innerHTML = `
         <div class="viewer-load-state load-error">
           <div class="hourglass" aria-hidden="true">⌛</div>
-          <h3>GitHub is temporarily overloaded</h3>
-          <p>We retried automatically with exponential backoff, but GitHub is still rate-limiting requests.</p>
-          <p class="muted">Please wait a bit and reload. Authenticated GitHub requests also raise the limit.</p>
+          <h3>Docs API is temporarily overloaded</h3>
+          <p>We retried automatically with exponential backoff, but the docs API is still rate-limiting requests.</p>
+          <p class="muted">Please wait a bit and reload.</p>
         </div>
       `;
-      setStatus("GitHub rate-limited this request. Retries were exhausted.", true);
+      setStatus("The docs API rate-limited this request. Retries were exhausted.", true);
       return;
     }
 
@@ -174,11 +219,11 @@
   }
 
   async function loadSourceWithRetry() {
-    const parsed = window.PortalApi.parseGitHubUrl(STATIC_SOURCE_URL);
+    const parsed = window.PortalApi.parseSourceUrl(STATIC_SOURCE_URL);
     const owner = parsed.owner;
     const repo = parsed.repo;
     const maxRetries = 4;
-    const baseDelayMs = 1000;
+    const baseDelayMs = 4000;
 
     let attempt = 0;
     while (attempt <= maxRetries) {
@@ -188,15 +233,15 @@
         const treeResult = await fetchTree(source);
         return { source, treeResult };
       } catch (error) {
-        if (!shouldRetryGitHubLoad(error) || attempt === maxRetries) {
+        if (!shouldRetrySourceLoad(error) || attempt === maxRetries) {
           throw error;
         }
 
         const delayMs = baseDelayMs * (2 ** attempt);
-        const reason = extractGitHubErrorInfo(error).message || "Temporary GitHub API failure";
+        const reason = extractLoadErrorInfo(error).message || "Temporary docs API failure";
         const branch = state.source && state.source.branch ? state.source.branch : parsed.branch;
         renderRetryState(owner, repo, branch, attempt + 1, maxRetries, delayMs, reason);
-        setStatus(`GitHub is busy. Retrying ${attempt + 1}/${maxRetries} in ${Math.ceil(delayMs / 1000)}s ...`, true);
+        setStatus(`Docs API is busy. Retrying ${attempt + 1}/${maxRetries} in ${Math.ceil(delayMs / 1000)}s ...`, true);
         await sleep(delayMs);
         attempt += 1;
       }
@@ -274,6 +319,18 @@
     state.treeSearch = event.target.value;
     tree.renderTree(viewer.openFile);
   });
+
+  if (dom.treePanelToggleBtnEl) {
+    dom.treePanelToggleBtnEl.addEventListener("click", () => {
+      setTreePanelCollapsed(!isTreePanelCollapsed);
+    });
+  }
+
+  if (dom.contentExpandBtnEl) {
+    dom.contentExpandBtnEl.addEventListener("click", () => {
+      setContentExpanded(!isContentExpanded);
+    });
+  }
 
   window.addEventListener("popstate", () => {
     if (!state.files.length) return;

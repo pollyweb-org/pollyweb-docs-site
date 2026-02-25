@@ -1,12 +1,12 @@
-function parseGitHubUrl(input) {
+function parseSourceUrl(input) {
   const url = new URL(input);
   if (url.hostname !== "github.com") {
-    throw new Error("Only github.com URLs are supported.");
+    throw new Error("Only repository source URLs from the configured host are supported.");
   }
 
   const parts = url.pathname.split("/").filter(Boolean);
   if (parts.length < 2) {
-    throw new Error("Use a GitHub URL: /owner/repo or /owner/repo/tree/branch/path");
+    throw new Error("Use a source URL: /owner/repo or /owner/repo/tree/branch/path");
   }
 
   const [owner, repo] = parts;
@@ -19,7 +19,8 @@ function parseGitHubUrl(input) {
   return { owner, repo, branch: null, rootPath: "" };
 }
 
-const GITHUB_ACCEPT_HEADER = { Accept: "application/vnd.github+json" };
+const SOURCE_ACCEPT_HEADER = { Accept: "application/vnd.github+json" };
+const DOCS_PAGE_API_URL = "https://api.pollyweb.org/docs/page";
 
 function getCache() {
   if (!window.PortalCache || typeof window.PortalCache.fetchCached !== "function") {
@@ -29,7 +30,7 @@ function getCache() {
 }
 
 async function resolveSource(input) {
-  const parsed = parseGitHubUrl(input);
+  const parsed = parseSourceUrl(input);
   if (parsed.branch) {
     return parsed;
   }
@@ -40,7 +41,7 @@ async function resolveSource(input) {
   try {
     const result = await fetchCached(endpoint, {
       cacheKey: `repo-meta:${parsed.owner}/${parsed.repo}`,
-      headers: GITHUB_ACCEPT_HEADER,
+      headers: SOURCE_ACCEPT_HEADER,
       responseType: "json",
       ttlMs: 30 * 60 * 1000,
       negativeTtlMs: 2 * 60 * 1000,
@@ -51,7 +52,7 @@ async function resolveSource(input) {
   } catch (err) {
     const status = typeof err.status === "number" ? err.status : "unknown";
     const msg = typeof err.body === "string" ? err.body : err.message;
-    throw new Error(`GitHub repo lookup error (${status}): ${msg}`);
+    throw new Error(`Source repo lookup error (${status}): ${msg}`);
   }
 
   if (!data.default_branch) {
@@ -74,7 +75,7 @@ async function fetchTree(source) {
   try {
     const result = await fetchCached(endpoint, {
       cacheKey: `repo-tree:${owner}/${repo}@${branch}`,
-      headers: GITHUB_ACCEPT_HEADER,
+      headers: SOURCE_ACCEPT_HEADER,
       responseType: "json",
       ttlMs: 20 * 60 * 1000,
       negativeTtlMs: 2 * 60 * 1000,
@@ -85,11 +86,11 @@ async function fetchTree(source) {
   } catch (err) {
     const status = typeof err.status === "number" ? err.status : "unknown";
     const msg = typeof err.body === "string" ? err.body : err.message;
-    throw new Error(`GitHub API error (${status}): ${msg}`);
+    throw new Error(`Source API error (${status}): ${msg}`);
   }
 
   if (!Array.isArray(data.tree)) {
-    throw new Error("Unexpected GitHub tree response.");
+    throw new Error("Unexpected source tree response.");
   }
 
   return { tree: data.tree, truncated: Boolean(data.truncated) };
@@ -101,24 +102,69 @@ function toRawUrl(source, path) {
   return `https://raw.githubusercontent.com/${owner}/${repo}/${encodeURIComponent(branch)}/${fullPath}`;
 }
 
-async function fetchRawFile(source, path) {
-  const rawUrl = toRawUrl(source, path);
+function parseApiErrorMessage(body, fallback = "Request failed") {
+  if (typeof body !== "string" || !body.trim()) return fallback;
+  try {
+    const parsed = JSON.parse(body);
+    if (parsed && typeof parsed.error === "string" && parsed.error.trim()) {
+      return parsed.error;
+    }
+    if (parsed && typeof parsed.message === "string" && parsed.message.trim()) {
+      return parsed.message;
+    }
+    return body;
+  } catch {
+    return body;
+  }
+}
+
+async function fetchPageViaPollywebApi(source, path) {
   const fetchCached = getCache();
-  const result = await fetchCached(rawUrl, {
-    cacheKey: `raw-file:${source.owner}/${source.repo}@${source.branch}:${path}`,
-    responseType: "text",
-    ttlMs: 15 * 60 * 1000,
-    negativeTtlMs: 60 * 1000,
-    minRequestIntervalMs: 5 * 1000,
-    staleWhileRevalidate: true,
-  });
-  return result;
+  const params = new URLSearchParams();
+  params.set("owner", source.owner);
+  params.set("repo", source.repo);
+  if (source.branch) params.set("branch", source.branch);
+  if (source.rootPath) params.set("root_path", source.rootPath);
+  params.set("path", path);
+
+  const endpoint = `${DOCS_PAGE_API_URL}?${params.toString()}`;
+  let result;
+  try {
+    result = await fetchCached(endpoint, {
+      cacheKey: `docs-page:${source.owner}/${source.repo}@${source.branch || "default"}:${source.rootPath || ""}:${path}`,
+      responseType: "json",
+      ttlMs: 15 * 60 * 1000,
+      negativeTtlMs: 90 * 1000,
+      minRequestIntervalMs: 5 * 1000,
+      staleWhileRevalidate: true,
+    });
+  } catch (err) {
+    const status = typeof err.status === "number" ? err.status : "unknown";
+    const msg = parseApiErrorMessage(err.body, err.message);
+    throw new Error(`Docs API page error (${status}): ${msg}`);
+  }
+
+  const payload = result && result.data ? result.data : null;
+  if (!payload || typeof payload.content !== "string") {
+    throw new Error("Docs API page error (invalid response): missing content.");
+  }
+
+  return {
+    ...result,
+    data: payload.content,
+    page: payload,
+  };
+}
+
+async function fetchRawFile(source, path) {
+  return fetchPageViaPollywebApi(source, path);
 }
 
 window.PortalApi = {
-  parseGitHubUrl,
+  parseSourceUrl,
   resolveSource,
   fetchTree,
   fetchRawFile,
+  fetchPageViaPollywebApi,
   toRawUrl,
 };

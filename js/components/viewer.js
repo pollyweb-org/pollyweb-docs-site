@@ -1,6 +1,17 @@
 window.createViewerComponent = function createViewerComponent(options) {
   const { state, viewerEl, viewerTitleEl, tocNavEl, metaEl, setStatus, toRawUrl, fetchRawFile, renderTree } = options;
   const { dirname, escapeHtml, normalizePath, splitRef } = window.PortalUtils;
+  let pendingLoads = 0;
+
+  function setPageLoading(active) {
+    const contentPanel = viewerEl.closest(".content-panel");
+    if (!contentPanel) return;
+    if (active) {
+      contentPanel.classList.add("page-loading");
+    } else {
+      contentPanel.classList.remove("page-loading");
+    }
+  }
 
   function findFileForDirectory(dirPath) {
     const prefix = dirPath ? `${dirPath}/` : "";
@@ -217,7 +228,7 @@ window.createViewerComponent = function createViewerComponent(options) {
     return /\.(mp4|webm|ogg|mov|m4v)$/i.test(stripUrlDecoration(url));
   }
 
-  function isGitHubUserAttachmentUrl(url) {
+  function isRepoUserAttachmentUrl(url) {
     try {
       const parsed = new URL(url, window.location.href);
       return (
@@ -235,7 +246,7 @@ window.createViewerComponent = function createViewerComponent(options) {
     const label = (linkEl.textContent || "").trim();
     if (isVideoUrl(label)) return true;
 
-    if (isGitHubUserAttachmentUrl(url) && isVideoUrl(label)) return true;
+    if (isRepoUserAttachmentUrl(url) && isVideoUrl(label)) return true;
 
     return false;
   }
@@ -498,6 +509,8 @@ window.createViewerComponent = function createViewerComponent(options) {
     const editUrl = `https://github.com/${source.owner}/${source.repo}/edit/${encodeURIComponent(source.branch)}/${repoPath}`;
     setStatus(`Loading ${path} ...`);
     renderBreadcrumb(path, openFile);
+    pendingLoads += 1;
+    setPageLoading(true);
 
     try {
       const { data: text, fromCache, stale } = await fetchRawFile(source, path);
@@ -523,6 +536,11 @@ window.createViewerComponent = function createViewerComponent(options) {
       renderEmptyToc("No headers available.");
       metaEl.textContent = "Failed to load file.";
       setStatus(`Failed to load ${path}`, true);
+    } finally {
+      pendingLoads = Math.max(0, pendingLoads - 1);
+      if (pendingLoads === 0) {
+        setPageLoading(false);
+      }
     }
   }
 

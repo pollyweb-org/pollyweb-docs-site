@@ -1,10 +1,17 @@
+.viewer-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
+
 .viewer {
   flex: 1;
   min-height: 0;
   overflow: auto;
   scrollbar-width: auto;
   scrollbar-color: #8c99ab #1b2028;
-  padding: 18px;
+  padding: 18px 56px 18px 18px;
 }
 
 .toc-panel {
