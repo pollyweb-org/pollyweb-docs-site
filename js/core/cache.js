@@ -70,6 +70,17 @@
     }
   }
 
+  function deleteCached(cacheKey) {
+    memoryCache.delete(cacheKey);
+    inFlight.delete(cacheKey);
+    lastRequestAt.delete(cacheKey);
+    try {
+      window.localStorage.removeItem(storageKey(cacheKey));
+    } catch {
+      // Ignore localStorage failures.
+    }
+  }
+
   function shouldThrottle(cacheKey, minRequestIntervalMs) {
     if (!minRequestIntervalMs || minRequestIntervalMs <= 0) return false;
     const last = lastRequestAt.get(cacheKey) || 0;
@@ -191,5 +202,6 @@
 
   window.PortalCache = {
     fetchCached,
+    deleteCached,
   };
 })();

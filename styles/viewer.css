@@ -5,6 +5,25 @@
   display: flex;
 }
 
+.viewer-wrap::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, rgba(133, 155, 184, 0.25) 0%, rgba(198, 213, 233, 0.9) 50%, rgba(133, 155, 184, 0.25) 100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 90ms ease;
+  z-index: 5;
+}
+
+.content-panel.page-loading .viewer-wrap::before {
+  opacity: 0.92;
+  animation: page-load-bar 720ms ease-in-out infinite;
+}
+
 .viewer {
   flex: 1;
   min-height: 0;

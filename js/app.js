@@ -3,7 +3,7 @@
   const state = window.PortalState;
   const dom = window.PortalDom;
   const { escapeHtml, isMarkdown } = window.PortalUtils;
-  const { fetchTree, resolveSource, fetchRawFile, toRawUrl } = window.PortalApi;
+  const { fetchTree, resolveSource, fetchRawFile, clearPageCache, toRawUrl } = window.PortalApi;
   const setStatus = window.setPortalStatus;
   const workspaceEl = document.getElementById("workspace");
   const treePanelEl = document.getElementById("treePanel");
@@ -29,6 +29,7 @@
     metaEl: dom.metaEl,
     setStatus,
     fetchRawFile,
+    clearPageCache,
     toRawUrl,
     renderTree: tree.renderTree,
   });

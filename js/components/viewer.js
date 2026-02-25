@@ -1,6 +1,7 @@
 window.createViewerComponent = function createViewerComponent(options) {
-  const { state, viewerEl, viewerTitleEl, tocNavEl, metaEl, setStatus, toRawUrl, fetchRawFile, renderTree } = options;
+  const { state, viewerEl, viewerTitleEl, tocNavEl, metaEl, setStatus, toRawUrl, fetchRawFile, clearPageCache, renderTree } = options;
   const { dirname, escapeHtml, normalizePath, splitRef } = window.PortalUtils;
+  const tocPanelEl = tocNavEl ? tocNavEl.closest(".toc-panel") : null;
   let pendingLoads = 0;
 
   function setPageLoading(active) {
@@ -11,6 +12,28 @@ window.createViewerComponent = function createViewerComponent(options) {
     } else {
       contentPanel.classList.remove("page-loading");
     }
+  }
+
+  function renderMetaActions(editUrl, path, anchor = "") {
+    metaEl.innerHTML = [
+      '<span class="meta-actions">',
+      `<a href="${editUrl}" target="_blank" rel="noreferrer">Source</a>`,
+      '<button type="button" class="meta-refresh-btn" aria-label="Refresh page content cache">',
+      '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 5.25V2.75h-2.5M3 10.75v2.5h2.5M12.2 7A4.75 4.75 0 0 0 4.8 4.4L3 5.9M3.8 9A4.75 4.75 0 0 0 11.2 11.6L13 10.1" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      "<span>Refresh</span>",
+      "</button>",
+      "</span>",
+    ].join("");
+
+    const refreshBtn = metaEl.querySelector(".meta-refresh-btn");
+    if (!refreshBtn) return;
+
+    refreshBtn.addEventListener("click", () => {
+      const { source } = state;
+      if (!source) return;
+      clearPageCache(source, path);
+      void openFile(path, anchor, { historyMode: "replace" });
+    });
   }
 
   function findFileForDirectory(dirPath) {
@@ -320,11 +343,17 @@ window.createViewerComponent = function createViewerComponent(options) {
     tocNavEl.innerHTML = `<p class="hint">${escapeHtml(message)}</p>`;
   }
 
+  function setTocPanelVisible(visible) {
+    if (!tocPanelEl) return;
+    tocPanelEl.hidden = !visible;
+  }
+
   function updateTableOfContents(currentVisiblePath) {
     if (!tocNavEl) return;
 
     const headings = Array.from(viewerEl.querySelectorAll("h1, h2, h3, h4"));
     if (!headings.length) {
+      setTocPanelVisible(false);
       renderEmptyToc("No headers available.");
       return;
     }
@@ -351,9 +380,12 @@ window.createViewerComponent = function createViewerComponent(options) {
     }
 
     if (!items.length) {
+      setTocPanelVisible(false);
       renderEmptyToc("No headers available.");
       return;
     }
+
+    setTocPanelVisible(items.length > 1);
 
     const list = document.createElement("ul");
     for (const item of items) {
@@ -496,21 +528,27 @@ window.createViewerComponent = function createViewerComponent(options) {
 
   async function openFile(path, anchor = "", options = {}) {
     const { historyMode = "replace" } = options;
+    pendingLoads += 1;
+    setPageLoading(true);
+
     state.activePath = path;
     renderTree(openFile);
 
     const { source } = state;
-    if (!source) return;
+    if (!source) {
+      pendingLoads = Math.max(0, pendingLoads - 1);
+      if (pendingLoads === 0) {
+        setPageLoading(false);
+      }
+      return;
+    }
 
     const repoPath = getRepoPathForVisiblePath(path)
       .split("/")
       .map((segment) => encodeURIComponent(segment))
       .join("/");
     const editUrl = `https://github.com/${source.owner}/${source.repo}/edit/${encodeURIComponent(source.branch)}/${repoPath}`;
-    setStatus(`Loading ${path} ...`);
     renderBreadcrumb(path, openFile);
-    pendingLoads += 1;
-    setPageLoading(true);
 
     try {
       const { data: text, fromCache, stale } = await fetchRawFile(source, path);
@@ -523,7 +561,7 @@ window.createViewerComponent = function createViewerComponent(options) {
       updateLocation(path, activeAnchor, { historyMode });
       state.initialAnchor = "";
 
-      metaEl.innerHTML = `<a href="${editUrl}" target="_blank" rel="noreferrer">Source</a>`;
+      renderMetaActions(editUrl, path, anchor || state.initialAnchor);
       if (stale) {
         setStatus(`Loaded ${path} (stale cache, refreshing in background).`);
       } else if (fromCache) {
@@ -533,6 +571,7 @@ window.createViewerComponent = function createViewerComponent(options) {
       }
     } catch (err) {
       viewerEl.innerHTML = `<p class="hint">${escapeHtml(err.message)}</p>`;
+      setTocPanelVisible(false);
       renderEmptyToc("No headers available.");
       metaEl.textContent = "Failed to load file.";
       setStatus(`Failed to load ${path}`, true);
@@ -543,6 +582,8 @@ window.createViewerComponent = function createViewerComponent(options) {
       }
     }
   }
+
+  setTocPanelVisible(false);
 
   return {
     openFile,

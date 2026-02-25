@@ -29,6 +29,13 @@ function getCache() {
   return window.PortalCache.fetchCached;
 }
 
+function getCacheController() {
+  if (!window.PortalCache || typeof window.PortalCache.deleteCached !== "function") {
+    throw new Error("PortalCache.deleteCached is required but was not loaded.");
+  }
+  return window.PortalCache;
+}
+
 async function resolveSource(input) {
   const parsed = parseSourceUrl(input);
   if (parsed.branch) {
@@ -128,10 +135,11 @@ async function fetchPageViaPollywebApi(source, path) {
   params.set("path", path);
 
   const endpoint = `${DOCS_PAGE_API_URL}?${params.toString()}`;
+  const cacheKey = getDocsPageCacheKey(source, path);
   let result;
   try {
     result = await fetchCached(endpoint, {
-      cacheKey: `docs-page:${source.owner}/${source.repo}@${source.branch || "default"}:${source.rootPath || ""}:${path}`,
+      cacheKey,
       responseType: "json",
       ttlMs: 15 * 60 * 1000,
       negativeTtlMs: 90 * 1000,
@@ -156,6 +164,15 @@ async function fetchPageViaPollywebApi(source, path) {
   };
 }
 
+function getDocsPageCacheKey(source, path) {
+  return `docs-page:${source.owner}/${source.repo}@${source.branch || "default"}:${source.rootPath || ""}:${path}`;
+}
+
+function clearPageCache(source, path) {
+  const cache = getCacheController();
+  cache.deleteCached(getDocsPageCacheKey(source, path));
+}
+
 async function fetchRawFile(source, path) {
   return fetchPageViaPollywebApi(source, path);
 }
@@ -166,5 +183,6 @@ window.PortalApi = {
   fetchTree,
   fetchRawFile,
   fetchPageViaPollywebApi,
+  clearPageCache,
   toRawUrl,
 };
