@@ -56,6 +56,10 @@
   padding: 0;
 }
 
+.toc-nav {
+  font-size: 14px;
+}
+
 .toc-nav li + li {
   margin-top: 6px;
 }
