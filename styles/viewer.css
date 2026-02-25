@@ -12,7 +12,7 @@
   left: 0;
   width: 100%;
   height: 3px;
-  background: linear-gradient(90deg, rgba(133, 155, 184, 0.25) 0%, rgba(198, 213, 233, 0.9) 50%, rgba(133, 155, 184, 0.25) 100%);
+  background: linear-gradient(90deg, rgba(112, 118, 128, 0.22) 0%, rgba(175, 181, 191, 0.76) 50%, rgba(112, 118, 128, 0.22) 100%);
   opacity: 0;
   pointer-events: none;
   transition: opacity 90ms ease;
@@ -29,7 +29,7 @@
   min-height: 0;
   overflow: auto;
   scrollbar-width: auto;
-  scrollbar-color: #8c99ab #1b2028;
+  scrollbar-color: #707883 #14181e;
   padding: 18px 56px 18px 18px;
 }
 
@@ -37,7 +37,7 @@
   width: 260px;
   min-width: 220px;
   border-left: 1px solid var(--border);
-  background: rgba(26, 31, 40, 0.7);
+  background: rgba(17, 21, 27, 0.8);
   padding: 14px 12px;
   overflow: auto;
 }
@@ -80,7 +80,7 @@
 }
 
 .toc-link:hover {
-  color: #c5ceda;
+  color: #bec5d0;
   text-decoration: underline;
 }
 
@@ -102,7 +102,7 @@
   padding: 18px 20px;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: rgba(26, 31, 40, 0.75);
+  background: rgba(17, 21, 27, 0.82);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
 }
 
@@ -168,7 +168,7 @@
 }
 
 .breadcrumb-btn:hover {
-  color: #c5ceda;
+  color: #bec5d0;
   text-decoration: underline;
 }
 
@@ -191,17 +191,17 @@
 }
 
 .viewer::-webkit-scrollbar-track {
-  background: #1b2028;
+  background: #14181e;
 }
 
 .viewer::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #98a5b7, #7d8fa8);
-  border: 2px solid #1b2028;
+  background: linear-gradient(180deg, #7c858f, #636b76);
+  border: 2px solid #14181e;
   border-radius: 999px;
 }
 
 .viewer::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #aab4c2, #8f9db0);
+  background: linear-gradient(180deg, #8a929c, #707984);
 }
 
 .viewer pre {
@@ -256,11 +256,11 @@
 }
 
 .viewer thead th {
-  background: rgba(154, 168, 187, 0.12);
+  background: rgba(138, 145, 157, 0.11);
 }
 
 .viewer tbody tr:nth-child(even) td {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.015);
 }
 
 .viewer a {
@@ -268,14 +268,14 @@
 }
 
 .viewer a:hover {
-  color: #b9c3d1;
+  color: #b2bbc8;
 }
 
 .viewer blockquote {
   margin: 14px 0;
   padding: 10px 14px;
   border-left: 3px solid var(--accent);
-  background: rgba(154, 168, 187, 0.1);
+  background: rgba(138, 145, 157, 0.09);
   border-radius: 8px;
 }
 
