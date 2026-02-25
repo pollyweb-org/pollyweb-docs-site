@@ -19,19 +19,6 @@ function buildNodes(paths) {
   return root;
 }
 
-function createTreeIcon(kind) {
-  const span = document.createElement("span");
-  span.className = "tree-icon";
-  if (kind === "folder") {
-    span.innerHTML =
-      '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M1.75 2h4.1l1.2 1.4h7.2c.96 0 1.75.79 1.75 1.75v6.6c0 .96-.79 1.75-1.75 1.75H1.75C.79 13.5 0 12.71 0 11.75v-8C0 2.79.79 2 1.75 2Z"/></svg>';
-  } else {
-    span.innerHTML =
-      '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M3.75 1h5.8c.46 0 .9.18 1.22.5l1.73 1.73c.32.32.5.76.5 1.22v9.8c0 .96-.79 1.75-1.75 1.75h-7.5C2.79 16 2 15.21 2 14.25v-11.5C2 1.79 2.79 1 3.75 1Zm5.5 1.5v2.1c0 .78.62 1.4 1.4 1.4h2.1"/></svg>';
-  }
-  return span;
-}
-
 function createCaret(collapsed) {
   const span = document.createElement("span");
   span.className = `tree-caret${collapsed ? " collapsed" : ""}`;
@@ -40,7 +27,70 @@ function createCaret(collapsed) {
   return span;
 }
 
+function stripFileExtension(name) {
+  return name.replace(/\.[^/.]+$/, "");
+}
+
+function stripLeadingNumber(name) {
+  return name.replace(/^\d+\s*[-_.:)]*\s*/, "");
+}
+
+function formatFileLabel(name) {
+  return stripLeadingNumber(stripFileExtension(name));
+}
+
+function formatFolderLabel(name) {
+  return stripLeadingNumber(name);
+}
+
+function getSingleVisibleFilePath(node, parentPath) {
+  let fileCount = 0;
+  let singlePath = null;
+  const stack = [{ node, path: parentPath }];
+
+  while (stack.length) {
+    const current = stack.pop();
+    const keys = Object.keys(current.node);
+    for (const key of keys) {
+      const child = current.node[key];
+      const childPath = `${current.path}/${key}`;
+      if (child === null) {
+        fileCount += 1;
+        if (fileCount > 1) return null;
+        singlePath = childPath;
+      } else {
+        stack.push({ node: child, path: childPath });
+      }
+    }
+  }
+
+  return fileCount === 1 ? singlePath : null;
+}
+
 window.createTreeComponent = function createTreeComponent(state, treeEl) {
+  function createFileButton(fullPath, onOpenFile) {
+    const btn = document.createElement("button");
+    btn.className = "tree-btn tree-file";
+    btn.type = "button";
+    btn.dataset.path = fullPath;
+
+    const spacer = document.createElement("span");
+    spacer.className = "tree-caret";
+    spacer.style.opacity = "0";
+    const label = document.createElement("span");
+    const fileName = fullPath.split("/").pop() || fullPath;
+    label.textContent = formatFileLabel(fileName);
+
+    btn.appendChild(spacer);
+    btn.appendChild(label);
+
+    if (state.activePath === fullPath) {
+      btn.classList.add("active");
+    }
+    btn.addEventListener("click", () => onOpenFile(fullPath));
+    return btn;
+  }
+
   function renderTreeNode(node, parentPath, onOpenFile) {
     const ul = document.createElement("ul");
     const keys = Object.keys(node).sort((a, b) => {
@@ -56,19 +106,32 @@ window.createTreeComponent = function createTreeComponent(state, treeEl) {
       const isDir = node[name] !== null;
 
       if (isDir) {
+        if (name === "$") {
+          const lifted = renderTreeNode(node[name], fullPath, onOpenFile);
+          for (const child of Array.from(lifted.children)) {
+            ul.appendChild(child);
+          }
+          continue;
+        }
+
+        const singleFilePath = getSingleVisibleFilePath(node[name], fullPath);
+        if (singleFilePath) {
+          li.appendChild(createFileButton(singleFilePath, onOpenFile));
+          ul.appendChild(li);
+          continue;
+        }
+
         const isCollapsed = !state.treeSearch && state.collapsedPaths.has(fullPath);
         const dirBtn = document.createElement("button");
         dirBtn.className = "tree-btn";
         dirBtn.type = "button";
 
         const caret = createCaret(isCollapsed);
-        const icon = createTreeIcon("folder");
         const label = document.createElement("span");
-        label.textContent = name;
+        label.textContent = formatFolderLabel(name);
         label.style.color = "var(--muted)";
 
         dirBtn.appendChild(caret);
-        dirBtn.appendChild(icon);
         dirBtn.appendChild(label);
         dirBtn.addEventListener("click", () => {
           if (state.collapsedPaths.has(fullPath)) {
@@ -84,27 +147,7 @@ window.createTreeComponent = function createTreeComponent(state, treeEl) {
           li.appendChild(renderTreeNode(node[name], fullPath, onOpenFile));
         }
       } else {
-        const btn = document.createElement("button");
-        btn.className = "tree-btn";
-        btn.type = "button";
-        btn.dataset.path = fullPath;
-
-        const spacer = document.createElement("span");
-        spacer.className = "tree-caret";
-        spacer.style.opacity = "0";
-        const icon = createTreeIcon("file");
-        const label = document.createElement("span");
-        label.textContent = name;
-
-        btn.appendChild(spacer);
-        btn.appendChild(icon);
-        btn.appendChild(label);
-
-        if (state.activePath === fullPath) {
-          btn.classList.add("active");
-        }
-        btn.addEventListener("click", () => onOpenFile(fullPath));
-        li.appendChild(btn);
+        li.appendChild(createFileButton(fullPath, onOpenFile));
       }
 
       ul.appendChild(li);

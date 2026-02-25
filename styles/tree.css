@@ -28,6 +28,10 @@
   padding-left: 16px;
 }
 
+.tree > ul {
+  padding-left: 0;
+}
+
 .tree li {
   margin: 2px 0;
 }
@@ -44,6 +48,10 @@
   cursor: pointer;
 }
 
+.tree button span {
+  white-space: nowrap;
+}
+
 .tree button:hover {
   background: var(--tree-hover);
 }
@@ -58,6 +66,17 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.tree-btn span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tree-btn.tree-file .tree-caret {
+  width: 8px;
+  flex: 0 0 8px;
 }
 
 .tree-icon {
