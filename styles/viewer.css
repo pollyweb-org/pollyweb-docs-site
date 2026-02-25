@@ -481,6 +481,7 @@
 
 .viewer thead th {
   background: transparent;
+  font-family: var(--font-heading);
   font-weight: 700;
   border-bottom: 3px solid var(--border);
 }
@@ -494,8 +495,13 @@
   border-bottom: 0;
 }
 
-.viewer thead th a {
+.viewer thead th a[href]:not([href=""]) {
+  font-family: inherit;
   font-weight: 700;
+}
+
+.viewer thead th a[href]:not([href=""]) code {
+  font-family: inherit;
 }
 
 .viewer table a[href]:not([href=""]) {
