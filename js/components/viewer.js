@@ -589,10 +589,42 @@ window.createViewerComponent = function createViewerComponent(options) {
     }
   }
 
+  function highlightYamlCodeBlocks(rootEl) {
+    const yamlBlocks = rootEl.querySelectorAll("pre > code.language-yaml, pre > code.language-yml");
+    for (const block of yamlBlocks) {
+      const source = block.textContent || "";
+      const lines = source.split("\n");
+      const highlighted = lines
+        .map((line) => {
+          const keyValueMatch = line.match(/^(\s*-?\s*)([^:#\n][^:\n]*)(\s*:\s*)(.*)$/);
+          if (!keyValueMatch) {
+            return escapeHtml(line);
+          }
+
+          const [, prefix, rawKey, separator, rawValue] = keyValueMatch;
+          const key = rawKey.trimEnd();
+          const keySuffix = rawKey.slice(key.length);
+          const hasValue = rawValue.trim().length > 0;
+
+          return [
+            escapeHtml(prefix),
+            `<span class="yaml-key">${escapeHtml(key)}</span>`,
+            escapeHtml(keySuffix),
+            escapeHtml(separator),
+            hasValue ? `<span class="yaml-value">${escapeHtml(rawValue)}</span>` : "",
+          ].join("");
+        })
+        .join("\n");
+
+      block.innerHTML = highlighted;
+    }
+  }
+
   function processRenderedContent(currentVisiblePath, onOpenFile) {
     if (!state.source) return;
     const { source } = state;
     trimTrailingEmptyTableRows(viewerEl);
+    highlightYamlCodeBlocks(viewerEl);
 
     const images = viewerEl.querySelectorAll("img[src]");
     for (const img of images) {

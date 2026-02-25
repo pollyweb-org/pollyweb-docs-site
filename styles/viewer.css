@@ -441,6 +441,16 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
+.viewer pre code.language-yaml .yaml-key,
+.viewer pre code.language-yml .yaml-key {
+  color: var(--yaml-key);
+}
+
+.viewer pre code.language-yaml .yaml-value,
+.viewer pre code.language-yml .yaml-value {
+  color: var(--yaml-value);
+}
+
 .viewer img {
   display: block;
   max-width: 100%;

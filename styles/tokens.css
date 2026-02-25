@@ -31,6 +31,8 @@
   --link-hover: #9cccff;
   --link-hover-bg: rgba(122, 184, 255, 0.16);
   --focus-ring: rgba(122, 184, 255, 0.72);
+  --yaml-key: #a9deff;
+  --yaml-value: #e6b099;
 }
 
 :root[data-theme="light"] {
@@ -64,6 +66,8 @@
   --link-hover: #0f4d8c;
   --link-hover-bg: rgba(22, 94, 168, 0.12);
   --focus-ring: rgba(22, 94, 168, 0.58);
+  --yaml-key: #19608f;
+  --yaml-value: #9b6144;
 }
 
 * {
