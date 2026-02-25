@@ -9,9 +9,17 @@
   const workspaceEl = document.getElementById("workspace");
   const treePanelEl = document.getElementById("treePanel");
   const dividerEl = document.getElementById("panelDivider");
+  const contentLayoutEl = document.querySelector(".content-layout");
+  const tocPanelEl = document.getElementById("tocPanel");
+  const tocDividerEl = document.getElementById("tocDivider");
   const repoHomeBtnEl = document.getElementById("repoHomeBtn");
   const THEME_STORAGE_KEY = "pollyweb-docs-theme";
+  const TREE_PANEL_COLLAPSED_STORAGE_KEY = "pollyweb-docs-tree-collapsed";
+  const TOC_PANEL_COLLAPSED_STORAGE_KEY = "pollyweb-docs-toc-collapsed";
+  const TREE_PANEL_WIDTH_STORAGE_KEY = "pollyweb-docs-tree-width";
+  const TOC_PANEL_WIDTH_STORAGE_KEY = "pollyweb-docs-toc-width";
   let isTreePanelCollapsed = false;
+  let isTocPanelCollapsed = false;
   let isContentExpanded = false;
 
   if (!window.marked) {
@@ -41,6 +49,10 @@
     '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10.5 3.25 5.5 8l5 4.75" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const SHOW_ICON =
     '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 3.25 10.5 8l-5 4.75" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const TOC_HIDE_ICON =
+    '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 3.25 10.5 8l-5 4.75" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const TOC_SHOW_ICON =
+    '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10.5 3.25 5.5 8l5 4.75" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const EXPAND_CONTENT_ICON =
     '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 2.75H2.75V6M10 2.75h3.25V6M6 13.25H2.75V10M10 13.25h3.25V10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const RESTORE_CONTENT_ICON =
@@ -92,6 +104,74 @@
     }
   }
 
+  function readStoredTreePanelCollapsed() {
+    try {
+      return window.localStorage.getItem(TREE_PANEL_COLLAPSED_STORAGE_KEY) === "1";
+    } catch {
+      return false;
+    }
+  }
+
+  function persistTreePanelCollapsed(collapsed) {
+    try {
+      window.localStorage.setItem(TREE_PANEL_COLLAPSED_STORAGE_KEY, collapsed ? "1" : "0");
+    } catch {
+      // Ignore localStorage failures and keep in-memory panel state only.
+    }
+  }
+
+  function readStoredTocPanelCollapsed() {
+    try {
+      return window.localStorage.getItem(TOC_PANEL_COLLAPSED_STORAGE_KEY) === "1";
+    } catch {
+      return false;
+    }
+  }
+
+  function persistTocPanelCollapsed(collapsed) {
+    try {
+      window.localStorage.setItem(TOC_PANEL_COLLAPSED_STORAGE_KEY, collapsed ? "1" : "0");
+    } catch {
+      // Ignore localStorage failures and keep in-memory panel state only.
+    }
+  }
+
+  function readStoredTreePanelWidth() {
+    try {
+      const raw = window.localStorage.getItem(TREE_PANEL_WIDTH_STORAGE_KEY);
+      const width = Number(raw);
+      return Number.isFinite(width) && width > 0 ? width : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function persistTreePanelWidth(width) {
+    try {
+      window.localStorage.setItem(TREE_PANEL_WIDTH_STORAGE_KEY, String(Math.round(width)));
+    } catch {
+      // Ignore localStorage failures and keep in-memory panel width only.
+    }
+  }
+
+  function readStoredTocPanelWidth() {
+    try {
+      const raw = window.localStorage.getItem(TOC_PANEL_WIDTH_STORAGE_KEY);
+      const width = Number(raw);
+      return Number.isFinite(width) && width > 0 ? width : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function persistTocPanelWidth(width) {
+    try {
+      window.localStorage.setItem(TOC_PANEL_WIDTH_STORAGE_KEY, String(Math.round(width)));
+    } catch {
+      // Ignore localStorage failures and keep in-memory panel width only.
+    }
+  }
+
   function getContentExpandBtnEl() {
     return document.getElementById("contentExpandBtn");
   }
@@ -114,11 +194,29 @@
     workspaceEl.classList.toggle("content-expanded", expanded);
     const contentExpandBtnEl = getContentExpandBtnEl();
     if (contentExpandBtnEl) {
-      const label = expanded ? "Return to normal view" : "Expand content";
+      const label = expanded ? "Show side panels" : "Focus on content (hide side panels)";
       contentExpandBtnEl.innerHTML = expanded ? RESTORE_CONTENT_ICON : EXPAND_CONTENT_ICON;
       contentExpandBtnEl.setAttribute("aria-label", label);
       contentExpandBtnEl.setAttribute("data-tooltip", label);
     }
+  }
+
+  function setTocPanelCollapsed(collapsed) {
+    if (!workspaceEl) return;
+    isTocPanelCollapsed = collapsed;
+    workspaceEl.classList.toggle("toc-collapsed", collapsed);
+    if (dom.tocPanelToggleBtnEl) {
+      const label = collapsed ? "Show sections" : "Hide sections";
+      dom.tocPanelToggleBtnEl.innerHTML = collapsed ? TOC_SHOW_ICON : TOC_HIDE_ICON;
+      dom.tocPanelToggleBtnEl.setAttribute("aria-label", label);
+      dom.tocPanelToggleBtnEl.setAttribute("data-tooltip", label);
+    }
+  }
+
+  function syncTocControlsAvailability() {
+    if (!workspaceEl || !tocPanelEl) return;
+    const hasVisibleSections = !tocPanelEl.hidden;
+    workspaceEl.classList.toggle("toc-unavailable", !hasVisibleSections);
   }
 
   function initPanelResize() {
@@ -135,6 +233,7 @@
       const maxTreeWidth = Math.max(MIN_TREE_WIDTH, workspaceRect.width - MIN_CONTENT_WIDTH - dividerWidth);
       const clamped = Math.min(Math.max(width, MIN_TREE_WIDTH), maxTreeWidth);
       workspaceEl.style.setProperty("--tree-width", `${clamped}px`);
+      return clamped;
     }
 
     function updateFromPointer(clientX) {
@@ -161,6 +260,7 @@
       if (!isDragging) return;
       isDragging = false;
       document.body.classList.remove("resizing-panels");
+      persistTreePanelWidth(treePanelEl.getBoundingClientRect().width);
     }
 
     dividerEl.addEventListener("pointerup", stopDragging);
@@ -169,7 +269,9 @@
     dividerEl.addEventListener("keydown", (event) => {
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
-        setTreePanelCollapsed(!isTreePanelCollapsed);
+        const nextCollapsed = !isTreePanelCollapsed;
+        setTreePanelCollapsed(nextCollapsed);
+        persistTreePanelCollapsed(nextCollapsed);
         return;
       }
       if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
@@ -177,8 +279,79 @@
       event.preventDefault();
       const currentWidth = treePanelEl.getBoundingClientRect().width;
       const delta = event.key === "ArrowLeft" ? -KEYBOARD_STEP : KEYBOARD_STEP;
-      applyTreeWidth(currentWidth + delta);
+      const nextWidth = applyTreeWidth(currentWidth + delta);
+      persistTreePanelWidth(nextWidth);
     });
+
+    const storedWidth = readStoredTreePanelWidth();
+    if (storedWidth) {
+      applyTreeWidth(storedWidth);
+    }
+  }
+
+  function initTocPanelResize() {
+    if (!contentLayoutEl || !tocPanelEl || !tocDividerEl) return;
+
+    const MIN_TOC_WIDTH = 220;
+    const MIN_VIEWER_WIDTH = 420;
+    const KEYBOARD_STEP = 24;
+    let isDragging = false;
+
+    function applyTocWidth(width) {
+      const layoutRect = contentLayoutEl.getBoundingClientRect();
+      const dividerWidth = tocDividerEl.getBoundingClientRect().width || 10;
+      const maxTocWidth = Math.max(MIN_TOC_WIDTH, layoutRect.width - MIN_VIEWER_WIDTH - dividerWidth);
+      const clamped = Math.min(Math.max(width, MIN_TOC_WIDTH), maxTocWidth);
+      contentLayoutEl.style.setProperty("--toc-width", `${clamped}px`);
+      return clamped;
+    }
+
+    function updateFromPointer(clientX) {
+      const layoutRect = contentLayoutEl.getBoundingClientRect();
+      const nextWidth = layoutRect.right - clientX;
+      applyTocWidth(nextWidth);
+    }
+
+    tocDividerEl.addEventListener("pointerdown", (event) => {
+      if (isTocPanelCollapsed) return;
+      if (isContentExpanded) return;
+      if (window.matchMedia("(max-width: 900px)").matches) return;
+      isDragging = true;
+      tocDividerEl.setPointerCapture(event.pointerId);
+      document.body.classList.add("resizing-panels");
+      updateFromPointer(event.clientX);
+    });
+
+    tocDividerEl.addEventListener("pointermove", (event) => {
+      if (!isDragging) return;
+      updateFromPointer(event.clientX);
+    });
+
+    function stopDragging() {
+      if (!isDragging) return;
+      isDragging = false;
+      document.body.classList.remove("resizing-panels");
+      persistTocPanelWidth(tocPanelEl.getBoundingClientRect().width);
+    }
+
+    tocDividerEl.addEventListener("pointerup", stopDragging);
+    tocDividerEl.addEventListener("pointercancel", stopDragging);
+
+    tocDividerEl.addEventListener("keydown", (event) => {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      if (isTocPanelCollapsed) return;
+      if (isContentExpanded) return;
+      event.preventDefault();
+      const currentWidth = tocPanelEl.getBoundingClientRect().width;
+      const delta = event.key === "ArrowLeft" ? -KEYBOARD_STEP : KEYBOARD_STEP;
+      const nextWidth = applyTocWidth(currentWidth + delta);
+      persistTocPanelWidth(nextWidth);
+    });
+
+    const storedWidth = readStoredTocPanelWidth();
+    if (storedWidth) {
+      applyTocWidth(storedWidth);
+    }
   }
 
   function getDefaultDocPath() {
@@ -411,9 +584,29 @@
   });
 
   if (dom.treePanelToggleBtnEl) {
+    setTreePanelCollapsed(readStoredTreePanelCollapsed());
     dom.treePanelToggleBtnEl.addEventListener("click", () => {
-      setTreePanelCollapsed(!isTreePanelCollapsed);
+      const nextCollapsed = !isTreePanelCollapsed;
+      setTreePanelCollapsed(nextCollapsed);
+      persistTreePanelCollapsed(nextCollapsed);
     });
+  }
+
+  if (dom.tocPanelToggleBtnEl) {
+    setTocPanelCollapsed(readStoredTocPanelCollapsed());
+    syncTocControlsAvailability();
+    dom.tocPanelToggleBtnEl.addEventListener("click", () => {
+      const nextCollapsed = !isTocPanelCollapsed;
+      setTocPanelCollapsed(nextCollapsed);
+      persistTocPanelCollapsed(nextCollapsed);
+    });
+  }
+
+  if (tocPanelEl && typeof MutationObserver === "function") {
+    const tocPanelObserver = new MutationObserver(() => {
+      syncTocControlsAvailability();
+    });
+    tocPanelObserver.observe(tocPanelEl, { attributes: true, attributeFilter: ["hidden"] });
   }
 
   if (dom.themeToggleBtnEl) {
@@ -449,5 +642,6 @@
   });
 
   initPanelResize();
+  initTocPanelResize();
   loadRepository();
 })();
