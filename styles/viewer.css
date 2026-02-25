@@ -474,6 +474,10 @@
   font-weight: 700;
 }
 
+.viewer thead th a {
+  font-weight: 700;
+}
+
 .viewer tbody tr:nth-child(even) td {
   background: rgba(255, 255, 255, 0.015);
 }
