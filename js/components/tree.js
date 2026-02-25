@@ -60,30 +60,6 @@ function createHomeIcon() {
   return span;
 }
 
-function getSingleVisibleFilePath(node, parentPath) {
-  let fileCount = 0;
-  let singlePath = null;
-  const stack = [{ node, path: parentPath }];
-
-  while (stack.length) {
-    const current = stack.pop();
-    const keys = Object.keys(current.node);
-    for (const key of keys) {
-      const child = current.node[key];
-      const childPath = `${current.path}/${key}`;
-      if (child === null) {
-        fileCount += 1;
-        if (fileCount > 1) return null;
-        singlePath = childPath;
-      } else {
-        stack.push({ node: child, path: childPath });
-      }
-    }
-  }
-
-  return fileCount === 1 ? singlePath : null;
-}
-
 window.createTreeComponent = function createTreeComponent(state, treeEl) {
   function createFileButton(fullPath, onOpenFile) {
     const btn = document.createElement("button");
@@ -136,13 +112,6 @@ window.createTreeComponent = function createTreeComponent(state, treeEl) {
           for (const child of Array.from(lifted.children)) {
             ul.appendChild(child);
           }
-          continue;
-        }
-
-        const singleFilePath = getSingleVisibleFilePath(node[name], fullPath);
-        if (singleFilePath) {
-          li.appendChild(createFileButton(singleFilePath, onOpenFile));
-          ul.appendChild(li);
           continue;
         }
 
