@@ -457,21 +457,29 @@
 .viewer table {
   width: auto;
   border-collapse: collapse;
+  border-bottom: 1px solid var(--border);
   margin: 14px 0;
   font-size: 14px;
 }
 
 .viewer th,
 .viewer td {
-  border: 1px solid var(--border);
-  padding: 8px 10px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  padding: 10px 12px;
   text-align: left;
   vertical-align: top;
 }
 
 .viewer thead th {
-  background: rgba(138, 145, 157, 0.11);
+  background: transparent;
   font-weight: 700;
+  border-bottom: 2px solid var(--border);
+}
+
+.viewer table tr:last-child > td,
+.viewer table tr:last-child > th {
+  border-bottom: 0;
 }
 
 .viewer thead th a {
@@ -510,7 +518,7 @@
 }
 
 .viewer blockquote {
-  margin: 0;
+  margin: 14px 0;
   padding: 8px 12px;
   border-left: 3px solid var(--accent);
   background: rgba(138, 145, 157, 0.09);
