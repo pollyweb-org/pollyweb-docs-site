@@ -31,18 +31,20 @@
   min-width: 0;
 }
 
-.site-brand-mark {
+.site-brand-icon {
   width: 40px;
   height: 40px;
+  border-radius: 9px;
+  object-fit: cover;
+  display: block;
+}
+
+.site-brand-logo {
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  border: 1px solid rgba(121, 168, 255, 0.65);
-  background: radial-gradient(circle at 30% 25%, #5dc3ff 0%, #2b65e0 42%, #132853 100%);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
+  object-fit: cover;
+  display: block;
 }
 
 .site-brand-label {
@@ -613,10 +615,14 @@ body.resizing-panels * {
     gap: 10px;
   }
 
-  .site-brand-mark {
+  .site-brand-icon {
     width: 30px;
     height: 30px;
-    font-size: 10px;
+  }
+
+  .site-brand-logo {
+    width: 28px;
+    height: 28px;
   }
 
   .site-brand-label {

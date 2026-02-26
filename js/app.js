@@ -559,6 +559,7 @@
     }
 
     const safeMessage = escapeHtml(error && error.message ? String(error.message) : "Unknown error.");
+    const safeCurrentLocation = escapeHtml(window.location.href);
     dom.viewerEl.innerHTML = `
       <section class="viewer-error-state" role="alert" aria-live="assertive">
         <div class="viewer-error-head">
@@ -570,7 +571,7 @@
           <p class="viewer-error-copy">The docs backend did not respond successfully. Reload to try again.</p>
         </div>
         <div class="viewer-error-actions">
-          <a class="viewer-error-btn primary" href="${window.location.href}">Reload</a>
+          <a class="viewer-error-btn primary" href="${safeCurrentLocation}">Reload</a>
         </div>
         <details class="viewer-error-details">
           <summary>Technical details</summary>

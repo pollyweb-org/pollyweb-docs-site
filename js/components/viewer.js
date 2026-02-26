@@ -21,12 +21,13 @@ window.createViewerComponent = function createViewerComponent(options) {
       ? '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 6h3V3M9.5 3h3v3M3.5 10h3v3M9.5 13h3v-3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'
       : '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 2.75H2.75V6M10 2.75h3.25V6M6 13.25H2.75V10M10 13.25h3.25V10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
+    const safeEditUrl = escapeHtml(editUrl);
     metaEl.innerHTML = [
       '<span class="meta-actions">',
       `<button id="contentExpandBtn" type="button" class="meta-expand-btn" aria-controls="treePanel tocPanel" aria-label="${expandLabel}" data-tooltip="${expandLabel}">`,
       expandIcon,
       "</button>",
-      `<a href="${editUrl}" target="_blank" rel="noreferrer" class="meta-edit-btn" aria-label="Suggest edits to this page on GitHub" data-tooltip="Suggest edits to this page on GitHub"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17.25 9.81-9.81 3.75 3.75L6.75 21H3zM20.71 7.04a1 1 0 0 0 0-1.42L18.37 3.3a1 1 0 0 0-1.42 0l-1.67 1.67 3.75 3.75z" fill="currentColor"/></svg></a>`,
+      `<a href="${safeEditUrl}" target="_blank" rel="noreferrer" class="meta-edit-btn" aria-label="Suggest edits to this page on GitHub" data-tooltip="Suggest edits to this page on GitHub"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 17.25 9.81-9.81 3.75 3.75L6.75 21H3zM20.71 7.04a1 1 0 0 0 0-1.42L18.37 3.3a1 1 0 0 0-1.42 0l-1.67 1.67 3.75 3.75z" fill="currentColor"/></svg></a>`,
       '<button type="button" class="meta-refresh-btn" aria-label="Reload this page from GitHub" data-tooltip="Reload this page from GitHub">',
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.146 4.854l-1.489 1.489A8 8 0 1 0 12 20a8.094 8.094 0 0 0 7.371-4.886 1 1 0 1 0-1.842-.779A6.071 6.071 0 0 1 12 18a6 6 0 1 1 4.243-10.243l-1.39 1.39a.5.5 0 0 0 .354.854H19.5A.5.5 0 0 0 20 9.5V5.207a.5.5 0 0 0-.854-.353z" fill="currentColor"/></svg>',
       "</button>",
@@ -380,8 +381,9 @@ window.createViewerComponent = function createViewerComponent(options) {
   function renderLoadErrorState(path, editUrl, message, onRetry) {
     const safePath = escapeHtml(path);
     const safeMessage = escapeHtml(message || "Unknown error.");
+    const safeEditUrl = escapeHtml(editUrl || "");
     const sourceAction = editUrl
-      ? `<a class="viewer-error-btn ghost" href="${editUrl}" target="_blank" rel="noreferrer">Open source</a>`
+      ? `<a class="viewer-error-btn ghost" href="${safeEditUrl}" target="_blank" rel="noreferrer">Open source</a>`
       : "";
 
     viewerEl.innerHTML = [
@@ -665,6 +667,102 @@ window.createViewerComponent = function createViewerComponent(options) {
     }
   }
 
+  function normalizeProtocolValue(value) {
+    return String(value || "")
+      .replace(/[\u0000-\u001F\u007F\s]+/g, "")
+      .toLowerCase();
+  }
+
+  function isSafeHref(value) {
+    if (!value) return false;
+    if (value.startsWith("#")) return true;
+    if (value.startsWith("?")) return true;
+    if (value.startsWith("/") && !value.startsWith("//")) return true;
+    if (value.startsWith("./") || value.startsWith("../")) return true;
+
+    const normalized = normalizeProtocolValue(value);
+    if (
+      normalized.startsWith("javascript:") ||
+      normalized.startsWith("vbscript:") ||
+      normalized.startsWith("data:") ||
+      normalized.startsWith("file:")
+    ) {
+      return false;
+    }
+
+    try {
+      const parsed = new URL(value, window.location.href);
+      return parsed.protocol === "http:" || parsed.protocol === "https:" || parsed.protocol === "mailto:" || parsed.protocol === "tel:";
+    } catch {
+      return false;
+    }
+  }
+
+  function isSafeSrc(value) {
+    if (!value) return false;
+    if (value.startsWith("/") && !value.startsWith("//")) return true;
+    if (value.startsWith("./") || value.startsWith("../")) return true;
+
+    const normalized = normalizeProtocolValue(value);
+    if (
+      normalized.startsWith("javascript:") ||
+      normalized.startsWith("vbscript:") ||
+      normalized.startsWith("file:") ||
+      normalized.startsWith("data:text/html") ||
+      normalized.startsWith("data:image/svg")
+    ) {
+      return false;
+    }
+    if (normalized.startsWith("data:")) {
+      return /^data:image\/(png|gif|jpe?g|webp);/i.test(value);
+    }
+
+    try {
+      const parsed = new URL(value, window.location.href);
+      return parsed.protocol === "http:" || parsed.protocol === "https:" || parsed.protocol === "blob:";
+    } catch {
+      return false;
+    }
+  }
+
+  function sanitizeRenderedHtml(rootEl) {
+    const blocked = rootEl.querySelectorAll("script, iframe, object, embed, meta, base, form, input, textarea, select, button");
+    for (const node of blocked) {
+      node.remove();
+    }
+
+    const allElements = rootEl.querySelectorAll("*");
+    for (const el of allElements) {
+      for (const attr of Array.from(el.attributes)) {
+        const attrName = attr.name.toLowerCase();
+        const attrValue = attr.value || "";
+
+        if (attrName.startsWith("on") || attrName === "srcdoc") {
+          el.removeAttribute(attr.name);
+          continue;
+        }
+
+        if ((attrName === "href" || attrName === "xlink:href") && !isSafeHref(attrValue)) {
+          el.removeAttribute(attr.name);
+          continue;
+        }
+
+        if ((attrName === "src" || attrName === "poster") && !isSafeSrc(attrValue)) {
+          el.removeAttribute(attr.name);
+          continue;
+        }
+      }
+
+      if (el.tagName === "A" && el.getAttribute("target") === "_blank") {
+        const currentRel = (el.getAttribute("rel") || "").split(/\s+/).filter(Boolean);
+        const relSet = new Set(currentRel.map((entry) => entry.toLowerCase()));
+        relSet.add("noopener");
+        relSet.add("noreferrer");
+        el.setAttribute("rel", Array.from(relSet).join(" "));
+      }
+    }
+  }
+
   function processRenderedContent(currentVisiblePath, onOpenFile) {
     if (!state.source) return;
     const { source } = state;
@@ -850,6 +948,7 @@ window.createViewerComponent = function createViewerComponent(options) {
       const { data: text, fromCache, stale } = await fetchRawFile(source, path);
 
       viewerEl.innerHTML = window.marked.parse(text);
+      sanitizeRenderedHtml(viewerEl);
       processRenderedContent(path, openFile);
       updateTableOfContents(path);
       scrollToAnchor(anchor || state.initialAnchor);
