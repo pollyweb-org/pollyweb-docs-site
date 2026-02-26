@@ -79,10 +79,40 @@
   <link rel="stylesheet" href="./styles/layout.css" />
   <link rel="stylesheet" href="./styles/tree.css" />
   <link rel="stylesheet" href="./styles/viewer.css" />
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"
+    integrity="sha384-948ahk4ZmxYVYOc+rxN1H2gM1EJ2Duhp7uHtZ4WSLkV4Vtx5MUqnV+l7u9B+jFv+"
+    crossorigin="anonymous"
+  ></script>
 </head>
 <body>
   <div class="app">
+    <header class="site-context-bar" aria-label="PollyWeb site navigation">
+      <div class="site-context-inner">
+        <a class="site-brand" href="https://pollyweb.org" target="_blank" rel="noreferrer">
+          <span class="site-brand-mark" aria-hidden="true">PW</span>
+          <span class="site-brand-label">PollyWeb</span>
+          <span class="site-context-badge">Docs</span>
+        </a>
+        <nav class="site-context-nav" aria-label="Main PollyWeb sections">
+          <a href="https://pollyweb.org/#protocol" target="_blank" rel="noreferrer">Protocol</a>
+          <a href="https://pollyweb.org/#vision" target="_blank" rel="noreferrer">Vision</a>
+          <a href="https://pollyweb.org/#repositories" target="_blank" rel="noreferrer">Repositories</a>
+          <a href="https://pollyweb.org/#resources" target="_blank" rel="noreferrer">Resources</a>
+        </nav>
+        <a
+          class="site-context-cta"
+          href="https://github.com/pollyweb-org"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Open PollyWeb on GitHub"
+        >
+          GitHub
+          <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+      <div class="site-context-accent" aria-hidden="true"></div>
+    </header>
     <div id="workspace" class="workspace">
       <section id="treePanel" class="panel tree-panel">
         <input
