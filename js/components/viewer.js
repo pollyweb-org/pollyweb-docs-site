@@ -648,12 +648,24 @@ window.createViewerComponent = function createViewerComponent(options) {
     }
   }
 
+  function normalizeCodeStyledLinkLabels(rootEl) {
+    const links = rootEl.querySelectorAll("a");
+    for (const link of links) {
+      if (link.childNodes.length !== 1) continue;
+      const onlyChild = link.firstElementChild;
+      if (!onlyChild || onlyChild.tagName !== "CODE") continue;
+      const label = onlyChild.textContent || "";
+      link.textContent = label;
+    }
+  }
+
   function processRenderedContent(currentVisiblePath, onOpenFile) {
     if (!state.source) return;
     const { source } = state;
     trimTrailingEmptyTableRows(viewerEl);
     suppressTableBottomBorderBeforeRule(viewerEl);
     highlightYamlCodeBlocks(viewerEl);
+    normalizeCodeStyledLinkLabels(viewerEl);
 
     const images = viewerEl.querySelectorAll("img[src]");
     for (const img of images) {
@@ -681,7 +693,12 @@ window.createViewerComponent = function createViewerComponent(options) {
     const links = viewerEl.querySelectorAll("a[href]");
     for (const link of links) {
       const href = (link.getAttribute("href") || "").trim();
-      if (!href) continue;
+      if (!href) {
+        link.addEventListener("click", (event) => {
+          event.preventDefault();
+        });
+        continue;
+      }
 
       const portalDocPath = resolvePortalDocPathFromHref(href);
       if (portalDocPath) {

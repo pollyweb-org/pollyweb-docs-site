@@ -134,9 +134,9 @@
   font-size: 1.25em;
 }
 
-.viewer h1 a[href]:not([href=""]),
-.viewer h2 a[href]:not([href=""]),
-.viewer h3 a[href]:not([href=""]) {
+.viewer h1 a[href],
+.viewer h2 a[href],
+.viewer h3 a[href] {
   font-family: inherit;
   font-size: inherit;
   font-weight: inherit;
@@ -145,9 +145,9 @@
   text-decoration: none !important;
 }
 
-.viewer h1 a[href]:not([href=""]):hover,
-.viewer h2 a[href]:not([href=""]):hover,
-.viewer h3 a[href]:not([href=""]):hover {
+.viewer h1 a[href]:hover,
+.viewer h2 a[href]:hover,
+.viewer h3 a[href]:hover {
   color: var(--link-hover);
   background: transparent;
 }
@@ -524,42 +524,46 @@
   border-bottom: 0;
 }
 
-.viewer thead th a[href]:not([href=""]) {
+.viewer thead th a[href] {
   font-family: inherit;
   font-weight: 700;
 }
 
-.viewer thead th a[href]:not([href=""]) code {
+.viewer thead th a[href] code {
   font-family: inherit;
 }
 
-.viewer table a[href]:not([href=""]) {
+.viewer table a[href] {
   font-family: var(--font-body);
   font-size: inherit;
   font-weight: inherit;
 }
 
-.viewer table a[href]:not([href=""]) code {
+.viewer table a[href] code {
   font-family: var(--font-body);
   font-size: inherit;
   font-weight: inherit;
 }
 
-.viewer a[href]:not([href=""]) {
+.viewer a[href] {
   color: var(--link);
   text-decoration: none !important;
   font-weight: 500;
   transition: color 160ms ease, background-color 160ms ease;
 }
 
-.viewer a[href]:not([href=""]):hover {
+.viewer a[href]:visited {
+  color: var(--link);
+}
+
+.viewer a[href]:hover {
   color: var(--link-hover);
   text-decoration: none !important;
   background: var(--link-hover-bg);
   border-radius: 4px;
 }
 
-.viewer a[href]:not([href=""]):focus-visible {
+.viewer a[href]:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
