@@ -101,6 +101,10 @@
   margin-top: 0;
 }
 
+.viewer p {
+  margin: 0.55em 0;
+}
+
 .viewer h1,
 .viewer h2,
 .viewer h3 {
