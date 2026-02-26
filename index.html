@@ -1,6 +1,61 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script>
+    (function initGa4DocsPollyweb() {
+      const measurementId = "G-DY6ELSZLLD";
+
+      function isEeaConsentRequired() {
+        return window.POLLYWEB_EEA_CONSENT_REQUIRED === true;
+      }
+
+      function isEeaConsentGranted() {
+        return window.POLLYWEB_EEA_CONSENT_GRANTED === true;
+      }
+
+      function shouldLoadAnalytics() {
+        return !isEeaConsentRequired() || isEeaConsentGranted();
+      }
+
+      function loadGtagScript() {
+        const existing = document.querySelector('script[src^="https://www.googletagmanager.com/gtag/js?id="]');
+        if (existing) return;
+        const script = document.createElement("script");
+        script.async = true;
+        script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
+        document.head.appendChild(script);
+      }
+
+      function enableAnalytics() {
+        if (window.__POLLYWEB_GA4_ENABLED) return;
+        window.__POLLYWEB_GA4_ENABLED = true;
+        loadGtagScript();
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = window.gtag || function gtag() {
+          window.dataLayer.push(arguments);
+        };
+        window.gtag("js", new Date());
+        window.gtag("config", measurementId, {
+          anonymize_ip: true,
+          allow_google_signals: false,
+        });
+      }
+
+      window.PollywebAnalytics = window.PollywebAnalytics || {};
+      window.PollywebAnalytics.enable = enableAnalytics;
+      window.PollywebAnalytics.trackPageView = function trackPageView() {
+        if (typeof window.gtag !== "function") return;
+        window.gtag("config", measurementId, {
+          page_path: window.location.pathname,
+          page_title: document.title,
+        });
+      };
+
+      if (shouldLoadAnalytics()) {
+        enableAnalytics();
+      }
+    })();
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Document Portal</title>

@@ -582,6 +582,12 @@ window.createViewerComponent = function createViewerComponent(options) {
     }
   }
 
+  function trackSpaPageView() {
+    if (!window.PollywebAnalytics) return;
+    if (typeof window.PollywebAnalytics.trackPageView !== "function") return;
+    window.PollywebAnalytics.trackPageView();
+  }
+
   function isVisuallyEmptyTableRow(row) {
     const cells = Array.from(row.cells || []);
     if (!cells.length) return false;
@@ -849,6 +855,7 @@ window.createViewerComponent = function createViewerComponent(options) {
       scrollToAnchor(anchor || state.initialAnchor);
       const activeAnchor = anchor || state.initialAnchor;
       updateLocation(path, activeAnchor, { historyMode });
+      trackSpaPageView();
       state.initialAnchor = "";
 
       renderMetaActions(editUrl, path, anchor || state.initialAnchor);
