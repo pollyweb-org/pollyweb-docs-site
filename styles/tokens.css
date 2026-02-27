@@ -35,6 +35,12 @@
   --yaml-key: #a9deff;
   --yaml-value: #e6b099;
   --yaml-comment: #b8ddb5;
+  --topbar-bg: linear-gradient(180deg, #050d1d 0%, #040a16 100%);
+  --topbar-border: rgba(102, 149, 240, 0.2);
+  --topbar-brand-text: #f2f6ff;
+  --topbar-badge-text: #b9cffd;
+  --topbar-badge-border: rgba(108, 159, 255, 0.38);
+  --topbar-badge-bg: rgba(34, 74, 154, 0.35);
 }
 
 :root[data-theme="light"] {
@@ -72,6 +78,12 @@
   --yaml-key: #19608f;
   --yaml-value: #9b6144;
   --yaml-comment: #6e916b;
+  --topbar-bg: linear-gradient(180deg, #f4f8ff 0%, #e9f1ff 100%);
+  --topbar-border: rgba(69, 113, 173, 0.28);
+  --topbar-brand-text: #112740;
+  --topbar-badge-text: #1b4f8f;
+  --topbar-badge-border: rgba(56, 110, 182, 0.38);
+  --topbar-badge-bg: rgba(100, 156, 230, 0.18);
 }
 
 * {

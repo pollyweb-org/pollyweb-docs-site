@@ -9,8 +9,8 @@
 }
 
 .site-context-bar {
-  background: linear-gradient(180deg, #050d1d 0%, #040a16 100%);
-  border-bottom: 1px solid rgba(102, 149, 240, 0.2);
+  background: var(--topbar-bg);
+  border-bottom: 1px solid var(--topbar-border);
 }
 
 .site-context-inner {
@@ -26,7 +26,7 @@
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  color: #f2f6ff;
+  color: var(--topbar-brand-text);
   text-decoration: none;
   min-width: 0;
 }
@@ -63,11 +63,11 @@
   line-height: 1;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #b9cffd;
+  color: var(--topbar-badge-text);
   padding: 6px 8px;
-  border: 1px solid rgba(108, 159, 255, 0.38);
+  border: 1px solid var(--topbar-badge-border);
   border-radius: 999px;
-  background: rgba(34, 74, 154, 0.35);
+  background: var(--topbar-badge-bg);
 }
 
 .site-context-nav {
