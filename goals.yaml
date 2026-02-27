@@ -1,11 +1,19 @@
-BreadcrumTrail:
+Breadcrum Trail:
   - tooltips are below the buttons
   - tooltips align to the left of most left button on the left-button group
   - tooltips align to the right of most right button on the right-button group
   - e.g. if botton X is the last button on the right group, then all the tooltips in the right-button group align to the right of button X
   - the breadcrum trail does not need tooltips
 
-FileVisibility:
+Navigation Tree:
+  - shows the file and folder structure of the documentation
+  - supports nested folders and markdown files
+  - clicking on a folder expands or collapses its contents
+  - clicking on a markdown file opens it in the content area
+  - the navigation tree is generated dynamically based on the files and folders in the documentation directory
+  - when a page is opened, the navigation tree automatically expands to show the current page and its parent folders
+
+File Visibility:
   - only show files and folders listed in the Show section
   - hide all other files and folders, including any listed in Hide
   - support wildcard rules where * means all files in a folder

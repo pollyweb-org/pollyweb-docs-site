@@ -371,6 +371,11 @@
   font-weight: 400;
 }
 
+#viewerTitle.breadcrumb-compact {
+  gap: 4px;
+  font-size: 13px;
+}
+
 .breadcrumb-btn {
   border: 0;
   background: transparent;
@@ -382,6 +387,10 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+#viewerTitle.breadcrumb-compact .breadcrumb-btn {
+  gap: 6px;
 }
 
 .breadcrumb-btn:hover {
@@ -407,6 +416,12 @@
   height: 16px;
   flex: 0 0 16px;
   color: var(--muted);
+}
+
+#viewerTitle.breadcrumb-compact .breadcrumb-home-icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
 }
 
 .breadcrumb-home-icon svg {

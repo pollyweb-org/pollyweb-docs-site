@@ -3,6 +3,28 @@ window.createViewerComponent = function createViewerComponent(options) {
   const { dirname, escapeHtml, normalizePath, splitRef, extractPageToken, toSafeSlug } = window.PortalUtils;
   const tocPanelEl = tocNavEl ? tocNavEl.closest(".toc-panel") : null;
   let pendingLoads = 0;
+  let breadcrumbLayoutRafId = 0;
+
+  function updateBreadcrumbLayoutMode() {
+    const firstCrumb = viewerTitleEl.querySelector(".breadcrumb-btn, .breadcrumb-text");
+    const copyBtn = viewerTitleEl.querySelector(".title-copy-btn");
+    if (!firstCrumb || !copyBtn) {
+      viewerTitleEl.classList.remove("breadcrumb-compact");
+      return;
+    }
+    const isBelowControls = firstCrumb.offsetTop >= copyBtn.offsetTop + copyBtn.offsetHeight - 2;
+    viewerTitleEl.classList.toggle("breadcrumb-compact", isBelowControls);
+  }
+
+  function scheduleBreadcrumbLayoutModeUpdate() {
+    window.cancelAnimationFrame(breadcrumbLayoutRafId);
+    breadcrumbLayoutRafId = window.requestAnimationFrame(() => {
+      breadcrumbLayoutRafId = 0;
+      updateBreadcrumbLayoutMode();
+    });
+  }
+
+  window.addEventListener("resize", scheduleBreadcrumbLayoutModeUpdate);
 
   function setPageLoading(active) {
     const contentPanel = viewerEl.closest(".content-panel");
@@ -321,6 +343,7 @@ window.createViewerComponent = function createViewerComponent(options) {
     separator.className = "breadcrumb-separator";
     separator.textContent = "/";
     viewerTitleEl.appendChild(separator);
+    scheduleBreadcrumbLayoutModeUpdate();
   }
 
   function getRepoPathForVisiblePath(path) {
