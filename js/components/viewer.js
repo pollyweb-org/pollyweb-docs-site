@@ -1,6 +1,6 @@
 window.createViewerComponent = function createViewerComponent(options) {
   const { state, viewerEl, viewerTitleEl, tocNavEl, metaEl, setStatus, toRawUrl, fetchRawFile, clearPageCache, renderTree } = options;
-  const { dirname, escapeHtml, normalizePath, splitRef } = window.PortalUtils;
+  const { dirname, escapeHtml, normalizePath, splitRef, extractPageToken, toSafeSlug } = window.PortalUtils;
   const tocPanelEl = tocNavEl ? tocNavEl.closest(".toc-panel") : null;
   let pendingLoads = 0;
 
@@ -134,16 +134,41 @@ window.createViewerComponent = function createViewerComponent(options) {
     button.setAttribute("aria-label", tooltip);
   }
 
+  function showCopyConfirmation(button, copied) {
+    const titleEl = button.closest("#viewerTitle");
+    if (!titleEl) return;
+
+    let note = titleEl.querySelector(".copy-confirmation");
+    if (!note) {
+      note = document.createElement("span");
+      note.className = "copy-confirmation";
+      note.setAttribute("role", "status");
+      note.setAttribute("aria-live", "polite");
+      titleEl.appendChild(note);
+    }
+
+    note.textContent = copied ? "Copied." : "Copy failed.";
+    note.classList.toggle("error", !copied);
+    note.style.left = `${button.offsetLeft + button.offsetWidth + 8}px`;
+    note.style.top = `${button.offsetTop + (button.offsetHeight / 2)}px`;
+    note.classList.add("visible");
+    window.clearTimeout(note._hideTimer);
+    note._hideTimer = window.setTimeout(() => {
+      note.classList.remove("visible");
+    }, copied ? 1500 : 2200);
+  }
+
   async function handleCopyPath(path, button) {
     const repoPath = getRepoPathForVisiblePath(path);
     const copied = await copyTextToClipboard(repoPath);
     updateCopyPathButtonTooltip(button, copied ? "Copied!" : "Copy failed");
     button.classList.toggle("copied", copied);
     button.classList.toggle("copy-failed", !copied);
+    showCopyConfirmation(button, copied);
     window.clearTimeout(button._copyResetTimer);
     button._copyResetTimer = window.setTimeout(() => {
       button.classList.remove("copied", "copy-failed");
-      updateCopyPathButtonTooltip(button, "Copy path");
+      updateCopyPathButtonTooltip(button, "Copy file path");
     }, copied ? 1500 : 2000);
   }
 
@@ -187,7 +212,7 @@ window.createViewerComponent = function createViewerComponent(options) {
     const copyBtn = document.createElement("button");
     copyBtn.type = "button";
     copyBtn.className = "meta-copy-btn title-copy-btn";
-    updateCopyPathButtonTooltip(copyBtn, "Copy path");
+    updateCopyPathButtonTooltip(copyBtn, "Copy file path");
     copyBtn.innerHTML = '<span class="breadcrumb-copy-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="2.5" width="8" height="9" rx="1.6" ry="1.6" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="2.5" y="5.5" width="8" height="8" rx="1.6" ry="1.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span>';
     copyBtn.addEventListener("click", () => {
       void handleCopyPath(path, copyBtn);
@@ -409,11 +434,42 @@ window.createViewerComponent = function createViewerComponent(options) {
     try {
       const parsed = new URL(href, window.location.href);
       const page = parsed.searchParams.get("page");
-      if (!page) return null;
-      return decodeRefPath(page);
+      if (page) return decodeRefPath(page);
+
+      const token = extractPageToken(parsed.searchParams.get("p"));
+      if (!token || !state.pagePathByToken) return null;
+      return state.pagePathByToken.get(token) || null;
     } catch {
       return null;
     }
+  }
+
+  function getPageHref(path, suffix = "") {
+    const token = state.pageTokenByPath && typeof state.pageTokenByPath.get === "function"
+      ? state.pageTokenByPath.get(path)
+      : "";
+    if (token) {
+      const slug = toSafeSlug(getPageTitle(path));
+      return `?p=${encodeURIComponent(token)}/${encodeURIComponent(slug)}${suffix}`;
+    }
+    return `?page=${encodeURIComponent(path)}${suffix}`;
+  }
+
+  function setPrettyPageTokenQuery(url, token, slug) {
+    const params = new URLSearchParams(url.search);
+    params.delete("page");
+    params.set("p", token);
+
+    const pairs = [];
+    for (const [key, value] of params.entries()) {
+      if (key === "p") {
+        pairs.push(`p=${encodeURIComponent(token)}/${encodeURIComponent(slug)}`);
+      } else {
+        pairs.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
+      }
+    }
+
+    url.search = pairs.length ? `?${pairs.join("&")}` : "";
   }
 
   function isRepoUserAttachmentUrl(url) {
@@ -645,8 +701,17 @@ window.createViewerComponent = function createViewerComponent(options) {
     const { historyMode = "replace" } = options;
     const url = new URL(window.location.href);
     if (path) {
-      url.searchParams.set("page", path);
+      const token = state.pageTokenByPath && typeof state.pageTokenByPath.get === "function"
+        ? state.pageTokenByPath.get(path)
+        : "";
+      if (token) {
+        setPrettyPageTokenQuery(url, token, toSafeSlug(getPageTitle(path)));
+      } else {
+        url.searchParams.set("page", path);
+        url.searchParams.delete("p");
+      }
     } else {
+      url.searchParams.delete("p");
       url.searchParams.delete("page");
     }
     url.hash = anchor ? `#${encodeURIComponent(anchor)}` : "";
@@ -890,7 +955,7 @@ window.createViewerComponent = function createViewerComponent(options) {
             return "";
           }
         })();
-        link.href = `?page=${encodeURIComponent(docPath)}${anchor ? `#${encodeURIComponent(anchor)}` : ""}`;
+        link.href = getPageHref(docPath, anchor ? `#${encodeURIComponent(anchor)}` : "");
         link.addEventListener("click", (event) => {
           event.preventDefault();
           onOpenFile(docPath, anchor, { historyMode: "push" });
@@ -925,7 +990,7 @@ window.createViewerComponent = function createViewerComponent(options) {
             }
           })();
 
-          link.href = `?page=${encodeURIComponent(docPath)}${suffix}`;
+          link.href = getPageHref(docPath, suffix);
           link.addEventListener("click", (event) => {
             event.preventDefault();
             onOpenFile(docPath, anchor, { historyMode: "push" });
@@ -955,7 +1020,7 @@ window.createViewerComponent = function createViewerComponent(options) {
       const docPath = resolveVisibleDocPath(visiblePath);
 
       if (docPath) {
-        link.href = `?page=${encodeURIComponent(docPath)}${suffix}`;
+        link.href = getPageHref(docPath, suffix);
         link.addEventListener("click", (event) => {
           event.preventDefault();
           const anchor = suffix.startsWith("#") ? decodeURIComponent(suffix.slice(1)) : "";
@@ -968,7 +1033,7 @@ window.createViewerComponent = function createViewerComponent(options) {
           const internalVisiblePath = getVisiblePathForRepoPath(normalizePath(resolvedRepoPath));
           const internalDocPath = resolveVisibleDocPath(internalVisiblePath);
           if (internalDocPath) {
-            link.href = `?page=${encodeURIComponent(internalDocPath)}${suffix}`;
+            link.href = getPageHref(internalDocPath, suffix);
             link.addEventListener("click", (event) => {
               event.preventDefault();
               const anchor = suffix.startsWith("#") ? decodeURIComponent(suffix.slice(1)) : "";
@@ -1011,7 +1076,7 @@ window.createViewerComponent = function createViewerComponent(options) {
 
     const link = document.createElement("a");
     link.className = "viewer-next-link";
-    link.href = `?page=${encodeURIComponent(nextPath)}`;
+    link.href = getPageHref(nextPath);
     link.addEventListener("click", (event) => {
       event.preventDefault();
       onOpenFile(nextPath, "", { historyMode: "push" });

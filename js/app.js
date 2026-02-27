@@ -3,7 +3,7 @@
   const REPO_HOME_URL = "https://github.com/pollyweb-org/pollyweb-docs-site";
   const state = window.PortalState;
   const dom = window.PortalDom;
-  const { escapeHtml, isMarkdown } = window.PortalUtils;
+  const { escapeHtml, isMarkdown, buildPageTokenMaps, extractPageToken } = window.PortalUtils;
   const { fetchTree, resolveSource, fetchRawFile, clearPageCache, toRawUrl } = window.PortalApi;
   const setStatus = window.setPortalStatus;
   const workspaceEl = document.getElementById("workspace");
@@ -417,6 +417,17 @@
     return testMode === "load-failure" ? "__test__/missing-file.md" : "";
   }
 
+  function resolvePageFromLocation() {
+    const params = new URLSearchParams(window.location.search);
+    const page = params.get("page") || "";
+    if (page && state.files.includes(page)) return page;
+
+    const token = extractPageToken(params.get("p") || "");
+    if (!token) return "";
+    if (!state.pagePathByToken || typeof state.pagePathByToken.get !== "function") return "";
+    return state.pagePathByToken.get(token) || "";
+  }
+
   function sleep(ms) {
     return new Promise((resolve) => {
       window.setTimeout(resolve, ms);
@@ -702,6 +713,9 @@
         .filter(Boolean);
 
       state.files = applyVisibilitySettings(files, visibilitySettings).sort((a, b) => a.localeCompare(b));
+      const { tokenByPath, pathByToken } = buildPageTokenMaps(state.files);
+      state.pageTokenByPath = tokenByPath;
+      state.pagePathByToken = pathByToken;
       state.collapsedPaths.clear();
       for (const filePath of state.files) {
         const parts = filePath.split("/");
@@ -712,8 +726,9 @@
         }
       }
 
-      if (state.initialPage && state.files.includes(state.initialPage)) {
-        const parts = state.initialPage.split("/");
+      const initialDocPath = resolvePageFromLocation() || (state.initialPage && state.files.includes(state.initialPage) ? state.initialPage : "");
+      if (initialDocPath) {
+        const parts = initialDocPath.split("/");
         let current = "";
         for (let i = 0; i < parts.length - 1; i += 1) {
           current = current ? `${current}/${parts[i]}` : parts[i];
@@ -730,7 +745,7 @@
 
       const firstDoc = getDefaultDocPath();
 
-      const initialDoc = state.initialPage && state.files.includes(state.initialPage) ? state.initialPage : "";
+      const initialDoc = initialDocPath;
 
       const testDoc = getTestPage();
       if (testDoc) {
@@ -804,8 +819,13 @@
 
     const params = new URLSearchParams(window.location.search);
     const page = params.get("page") || "";
+    const token = extractPageToken(params.get("p") || "");
     const anchor = decodeURIComponent(window.location.hash.replace(/^#/, ""));
-    const targetPath = page && state.files.includes(page) ? page : getDefaultDocPath();
+    const tokenPath = token && state.pagePathByToken ? state.pagePathByToken.get(token) : "";
+    const targetPath =
+      (page && state.files.includes(page) ? page : "") ||
+      tokenPath ||
+      getDefaultDocPath();
 
     if (!targetPath) return;
     if (targetPath === state.activePath && !anchor) return;

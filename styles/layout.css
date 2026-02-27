@@ -221,9 +221,11 @@ body.resizing-panels * {
 #viewerTitle {
   margin: 0;
   position: relative;
-  padding: 8px 260px 16px 90px;
+  padding: 8px 260px 8px 90px;
+  min-height: 46px;
+  box-sizing: border-box;
   font-size: 14px;
-  line-height: 1;
+  line-height: 1.2;
   color: var(--muted);
   border-bottom: 1px solid var(--border);
   letter-spacing: 0.04em;
@@ -516,9 +518,10 @@ body.resizing-panels * {
 .meta-copy-btn::after {
   content: attr(data-tooltip);
   position: absolute;
-  right: 0;
+  left: 50%;
   top: calc(100% + 8px);
-  transform: none;
+  transform: translateX(-50%);
+  z-index: 10;
   pointer-events: none;
   opacity: 0;
   white-space: nowrap;
@@ -699,7 +702,8 @@ body.resizing-panels * {
 }
 
 .meta-copy-btn::after {
-  right: 0;
+  right: auto;
+  left: 50%;
 }
 
 .meta-refresh-btn::after {
@@ -730,6 +734,33 @@ body.resizing-panels * {
   width: 14px;
   height: 14px;
   display: block;
+}
+
+.copy-confirmation {
+  position: absolute;
+  z-index: 5;
+  padding: 5px 8px;
+  border-radius: 7px;
+  border: 1px solid rgba(66, 160, 96, 0.45);
+  background: rgba(18, 30, 22, 0.96);
+  color: #d9f1e0;
+  font-size: 12px;
+  line-height: 1.2;
+  opacity: 0;
+  transform: translate(-2px, -50%);
+  pointer-events: none;
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.copy-confirmation.visible {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+
+.copy-confirmation.error {
+  border-color: rgba(255, 120, 108, 0.45);
+  background: rgba(49, 20, 20, 0.96);
+  color: #ffd1cc;
 }
 
 @keyframes page-load-bar {
