@@ -100,6 +100,53 @@ window.createViewerComponent = function createViewerComponent(options) {
     return span;
   }
 
+  async function copyTextToClipboard(text) {
+    if (!text) return false;
+
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        // Fall back to execCommand path below.
+      }
+    }
+
+    try {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.top = "-9999px";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+      const copied = document.execCommand("copy");
+      textarea.remove();
+      return copied;
+    } catch {
+      return false;
+    }
+  }
+
+  function updateCopyPathButtonTooltip(button, tooltip) {
+    button.setAttribute("data-tooltip", tooltip);
+    button.setAttribute("aria-label", tooltip);
+  }
+
+  async function handleCopyPath(path, button) {
+    const repoPath = getRepoPathForVisiblePath(path);
+    const copied = await copyTextToClipboard(repoPath);
+    updateCopyPathButtonTooltip(button, copied ? "Copied!" : "Copy failed");
+    button.classList.toggle("copied", copied);
+    button.classList.toggle("copy-failed", !copied);
+    window.clearTimeout(button._copyResetTimer);
+    button._copyResetTimer = window.setTimeout(() => {
+      button.classList.remove("copied", "copy-failed");
+      updateCopyPathButtonTooltip(button, "Copy path");
+    }, copied ? 1500 : 2000);
+  }
+
   function getVisibleFiles() {
     const query = state.treeSearch.trim().toLowerCase();
     if (!query) return state.files;
@@ -136,6 +183,16 @@ window.createViewerComponent = function createViewerComponent(options) {
       targetPath: findFileForDirectory(""),
       isHome: true,
     });
+
+    const copyBtn = document.createElement("button");
+    copyBtn.type = "button";
+    copyBtn.className = "meta-copy-btn title-copy-btn";
+    updateCopyPathButtonTooltip(copyBtn, "Copy path");
+    copyBtn.innerHTML = '<span class="breadcrumb-copy-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="2.5" width="8" height="9" rx="1.6" ry="1.6" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="2.5" y="5.5" width="8" height="8" rx="1.6" ry="1.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span>';
+    copyBtn.addEventListener("click", () => {
+      void handleCopyPath(path, copyBtn);
+    });
+    viewerTitleEl.appendChild(copyBtn);
 
     for (let i = 0; i < parts.length; i += 1) {
       if (hideParentFolder && i === parts.length - 2) {
@@ -200,6 +257,11 @@ window.createViewerComponent = function createViewerComponent(options) {
         viewerTitleEl.appendChild(text);
       }
     });
+
+    const separator = document.createElement("span");
+    separator.className = "breadcrumb-separator";
+    separator.textContent = "/";
+    viewerTitleEl.appendChild(separator);
   }
 
   function getRepoPathForVisiblePath(path) {

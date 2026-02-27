@@ -25,7 +25,7 @@
 .site-brand {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   color: var(--topbar-brand-text);
   text-decoration: none;
   min-width: 0;
@@ -34,7 +34,7 @@
 .site-brand-icon {
   width: 28px;
   height: 28px;
-  border-radius: 9px;
+  border-radius: 6px;
   object-fit: cover;
   display: block;
 }
@@ -59,6 +59,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  align-self: center;
   font-size: 11px;
   line-height: 1;
   text-transform: uppercase;
@@ -66,8 +67,9 @@
   color: var(--topbar-badge-text);
   padding: 6px 8px;
   border: 1px solid var(--topbar-badge-border);
-  border-radius: 999px;
+  border-radius: 12px;
   background: var(--topbar-badge-bg);
+  transform: translateY(-1px);
 }
 
 .site-context-nav {
@@ -218,7 +220,8 @@ body.resizing-panels * {
 
 #viewerTitle {
   margin: 0;
-  padding: 16px 260px 16px 52px;
+  position: relative;
+  padding: 8px 260px 16px 90px;
   font-size: 14px;
   line-height: 1;
   color: var(--muted);
@@ -332,7 +335,7 @@ body.resizing-panels * {
   align-items: center;
   justify-content: center;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 6px;
   background: var(--control-bg);
   color: var(--text);
   cursor: pointer;
@@ -464,19 +467,69 @@ body.resizing-panels * {
   transition: background 120ms ease;
 }
 
+.meta-copy-btn {
+  border: 1px solid var(--line);
+  background: var(--control-bg);
+  color: var(--text);
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+#viewerTitle .title-copy-btn {
+  position: absolute;
+  top: 8px;
+  left: 46px;
+}
+
 .meta-edit-btn svg {
   width: 14px;
   height: 14px;
   display: block;
 }
 
+.meta-copy-btn:hover {
+  background: var(--tree-hover);
+}
+
 .meta-edit-btn:hover {
   background: var(--tree-hover);
+}
+
+.meta-copy-btn:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 0;
 }
 
 .meta-edit-btn:focus-visible {
   outline: 1px solid var(--accent);
   outline-offset: 0;
+}
+
+.meta-copy-btn::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  transform: none;
+  pointer-events: none;
+  opacity: 0;
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 1;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--tooltip-bg);
+  color: var(--tooltip-text);
+  transition: opacity 120ms ease;
 }
 
 .meta-edit-btn::after {
@@ -498,9 +551,24 @@ body.resizing-panels * {
   transition: opacity 120ms ease;
 }
 
+.meta-copy-btn:hover::after,
+.meta-copy-btn:focus-visible::after,
+.meta-copy-btn.copied::after,
+.meta-copy-btn.copy-failed::after {
+  opacity: 1;
+}
+
 .meta-edit-btn:hover::after,
 .meta-edit-btn:focus-visible::after {
   opacity: 1;
+}
+
+.meta-copy-btn.copied {
+  color: var(--accent-2);
+}
+
+.meta-copy-btn.copy-failed {
+  color: #ff786c;
 }
 
 .meta-refresh-btn {
@@ -615,6 +683,7 @@ body.resizing-panels * {
 
 .theme-toggle-btn::after,
 .repo-home-btn::after,
+.meta-copy-btn::after,
 .meta-edit-btn::after,
 .meta-refresh-btn::after,
 .meta-expand-btn::after {
@@ -626,6 +695,10 @@ body.resizing-panels * {
 }
 
 .repo-home-btn::after {
+  right: 0;
+}
+
+.meta-copy-btn::after {
   right: 0;
 }
 
@@ -687,6 +760,7 @@ body.resizing-panels * {
 
   .site-brand-label {
     font-size: 16.8px;
+    line-height: 1;
   }
 
   .site-context-badge {
@@ -727,7 +801,7 @@ body.resizing-panels * {
   }
 
   #viewerTitle {
-    padding-left: 52px;
+    padding-left: 90px;
     padding-right: 190px;
   }
 

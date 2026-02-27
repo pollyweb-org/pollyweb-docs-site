@@ -423,9 +423,19 @@
     });
   }
 
-  function normalizeSettingsPattern(input) {
+  function normalizePathForMatching(input) {
     if (typeof input !== "string") return "";
-    return input.trim().replace(/^\/+/, "").replace(/\/+$/, "");
+    const normalized = typeof input.normalize === "function" ? input.normalize("NFKC") : input;
+    // Ignore emoji presentation selectors and ZWJ so settings paths match equivalent folder names.
+    return normalized
+      .replace(/[\uFE0E\uFE0F\u200D]/g, "")
+      .trim()
+      .replace(/^\/+/, "")
+      .replace(/\/+$/, "");
+  }
+
+  function normalizeSettingsPattern(input) {
+    return normalizePathForMatching(input);
   }
 
   function parseSettingsList(raw, sectionName) {
@@ -471,13 +481,13 @@
     if (normalized.endsWith("/*/*")) {
       const base = normalized.slice(0, -4);
       const escapedBase = escapeRegex(base);
-      return new RegExp(`^${escapedBase}/[^/]+(?:/.*)?$`);
+      return new RegExp(`^${escapedBase}/[^/]+/[^/]+(?:/.*)?$`);
     }
 
     if (normalized.endsWith("/*")) {
       const base = normalized.slice(0, -2);
       const escapedBase = escapeRegex(base);
-      return new RegExp(`^${escapedBase}/[^/]+$`);
+      return new RegExp(`^${escapedBase}/[^/]+(?:/.*)?$`);
     }
 
     const segments = normalized.split("/").map((segment) => {
@@ -490,7 +500,7 @@
   function matchesSettingsPattern(path, pattern) {
     const regex = toWildcardRegex(pattern);
     if (!regex) return false;
-    return regex.test(path);
+    return regex.test(normalizePathForMatching(path));
   }
 
   function applyVisibilitySettings(files, settings) {
