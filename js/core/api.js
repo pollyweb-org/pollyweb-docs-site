@@ -90,7 +90,7 @@ async function fetchTree(source, options = {}) {
         : `repo-tree:${owner}/${repo}@${branch}`,
       headers: SOURCE_ACCEPT_HEADER,
       responseType: "json",
-      ttlMs: 1 * 60 * 1000,
+      ttlMs: 15 * 60 * 1000,
       negativeTtlMs: 2 * 60 * 1000,
       minRequestIntervalMs: 15 * 1000,
       staleWhileRevalidate: !forceRefresh,
