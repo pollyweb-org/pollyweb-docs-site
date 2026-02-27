@@ -106,7 +106,11 @@ async function fetchTree(source) {
 function toRawUrl(source, path) {
   const { owner, repo, branch, rootPath } = source;
   const fullPath = rootPath ? `${rootPath}/${path}` : path;
-  return `https://raw.githubusercontent.com/${owner}/${repo}/${encodeURIComponent(branch)}/${fullPath}`;
+  const encodedPath = String(fullPath || "")
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+  return `https://raw.githubusercontent.com/${owner}/${repo}/${encodeURIComponent(branch)}/${encodedPath}`;
 }
 
 function parseApiErrorMessage(body, fallback = "Request failed") {

@@ -1,5 +1,13 @@
 # Pollyweb Docs Site
 
+## Automated tests
+
+This project uses `vitest` for unit tests.
+
+- Install dependencies: `npm install`
+- Run tests once: `npm test`
+- Run tests in watch mode: `npm run test:watch`
+
 ## Caching and `api.pollyweb.org` dependency
 
 This app uses `window.PortalCache` (`js/core/cache.js`) for all HTTP reads. Cache entries are kept:

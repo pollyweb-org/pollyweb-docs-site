@@ -22,13 +22,17 @@ function dirname(path) {
 }
 
 function splitRef(rawRef) {
-  const qIdx = rawRef.indexOf("?");
-  const hIdx = rawRef.indexOf("#");
+  const refText = String(rawRef || "").trim();
+  const ref = refText.startsWith("<") && refText.endsWith(">")
+    ? refText.slice(1, -1).trim()
+    : refText;
+  const qIdx = ref.indexOf("?");
+  const hIdx = ref.indexOf("#");
   const cut = qIdx === -1 ? hIdx : hIdx === -1 ? qIdx : Math.min(qIdx, hIdx);
   if (cut === -1) {
-    return { path: rawRef, suffix: "" };
+    return { path: ref, suffix: "" };
   }
-  return { path: rawRef.slice(0, cut), suffix: rawRef.slice(cut) };
+  return { path: ref.slice(0, cut), suffix: ref.slice(cut) };
 }
 
 function escapeHtml(input) {

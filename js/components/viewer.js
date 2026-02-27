@@ -2,8 +2,15 @@ window.createViewerComponent = function createViewerComponent(options) {
   const { state, viewerEl, viewerTitleEl, tocNavEl, metaEl, setStatus, toRawUrl, fetchRawFile, clearPageCache, renderTree } = options;
   const { dirname, escapeHtml, normalizePath, splitRef, extractPageToken, toSafeSlug } = window.PortalUtils;
   const tocPanelEl = tocNavEl ? tocNavEl.closest(".toc-panel") : null;
+  const viewerWrapEl = viewerEl.closest(".viewer-wrap");
   let pendingLoads = 0;
   let breadcrumbLayoutRafId = 0;
+  let pdfOverlayEl = null;
+  let pdfTitleEl = null;
+  let pdfFileNameEl = null;
+  let pdfFrameEl = null;
+  let pdfOpenNewTabEl = null;
+  let lastFocusedElBeforePdf = null;
 
   function updateBreadcrumbLayoutMode() {
     const firstCrumb = viewerTitleEl.querySelector(".breadcrumb-btn, .breadcrumb-text");
@@ -478,6 +485,10 @@ window.createViewerComponent = function createViewerComponent(options) {
     return /\.(mp4|webm|ogg|mov|m4v)$/i.test(stripUrlDecoration(url));
   }
 
+  function isPdfUrl(url) {
+    return /\.pdf$/i.test(stripUrlDecoration(url));
+  }
+
   function isRawGitHubUrl(url) {
     try {
       const parsed = new URL(url, window.location.href);
@@ -624,6 +635,115 @@ window.createViewerComponent = function createViewerComponent(options) {
     imgEl.replaceWith(video);
   }
 
+  function getPdfTitleFromUrl(url) {
+    try {
+      const parsed = new URL(url, window.location.href);
+      const parts = parsed.pathname.split("/").filter(Boolean);
+      const fileName = parts[parts.length - 1] || "PDF document";
+      return decodeURIComponent(fileName);
+    } catch {
+      return "PDF document";
+    }
+  }
+
+  function toPdfViewerUrl(pdfUrl) {
+    return `https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(pdfUrl)}`;
+  }
+
+  function ensurePdfOverlay() {
+    if (pdfOverlayEl || !viewerWrapEl) return;
+
+    const overlay = document.createElement("section");
+    overlay.className = "pdf-viewer-overlay";
+    overlay.hidden = true;
+    overlay.setAttribute("aria-hidden", "true");
+    overlay.setAttribute("aria-label", "PDF viewer");
+    overlay.innerHTML = [
+      '<div class="pdf-viewer-shell">',
+      '<header class="pdf-viewer-toolbar">',
+      '<div class="pdf-viewer-heading"><h3 class="pdf-viewer-title">PDF document</h3><span class="pdf-viewer-file-name"></span></div>',
+      '<div class="pdf-viewer-actions">',
+      '<a class="pdf-viewer-btn ghost" href="#" target="_blank" rel="noreferrer noopener">Open in new tab</a>',
+      '<button type="button" class="pdf-viewer-btn close" aria-label="Close PDF viewer">Close</button>',
+      "</div>",
+      "</header>",
+      '<iframe class="pdf-viewer-frame" title="PDF document"></iframe>',
+      "</div>",
+    ].join("");
+
+    viewerWrapEl.appendChild(overlay);
+    pdfOverlayEl = overlay;
+    pdfTitleEl = overlay.querySelector(".pdf-viewer-title");
+    pdfFileNameEl = overlay.querySelector(".pdf-viewer-file-name");
+    pdfFrameEl = overlay.querySelector(".pdf-viewer-frame");
+    pdfOpenNewTabEl = overlay.querySelector(".pdf-viewer-btn.ghost");
+    const closeBtn = overlay.querySelector(".pdf-viewer-btn.close");
+
+    if (closeBtn) {
+      closeBtn.addEventListener("click", () => {
+        closePdfOverlay();
+      });
+    }
+
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) {
+        closePdfOverlay();
+      }
+    });
+  }
+
+  function openPdfOverlay(url, title = "") {
+    ensurePdfOverlay();
+    if (!pdfOverlayEl || !pdfFrameEl || !pdfOpenNewTabEl || !pdfTitleEl) return;
+
+    lastFocusedElBeforePdf = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const fileName = getPdfTitleFromUrl(url);
+    const resolvedTitle = (title || "").trim() || fileName;
+    const viewerUrl = toPdfViewerUrl(url);
+    pdfTitleEl.textContent = resolvedTitle;
+    if (pdfFileNameEl) {
+      pdfFileNameEl.textContent = fileName;
+      pdfFileNameEl.hidden = resolvedTitle === fileName;
+    }
+    pdfFrameEl.src = viewerUrl;
+    pdfOpenNewTabEl.href = viewerUrl;
+    pdfOverlayEl.hidden = false;
+    pdfOverlayEl.setAttribute("aria-hidden", "false");
+  }
+
+  function closePdfOverlay() {
+    if (!pdfOverlayEl || !pdfFrameEl) return;
+    if (pdfOverlayEl.hidden) return;
+    pdfOverlayEl.hidden = true;
+    pdfOverlayEl.setAttribute("aria-hidden", "true");
+    pdfFrameEl.removeAttribute("src");
+    if (lastFocusedElBeforePdf && typeof lastFocusedElBeforePdf.focus === "function") {
+      lastFocusedElBeforePdf.focus();
+    }
+    lastFocusedElBeforePdf = null;
+  }
+
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && pdfOverlayEl && !pdfOverlayEl.hidden) {
+      closePdfOverlay();
+    }
+  });
+
+  function wirePdfLink(link, resolvedUrl) {
+    link.href = resolvedUrl;
+    link.target = "_blank";
+    link.rel = "noreferrer";
+    link.addEventListener("click", (event) => {
+      if (event.defaultPrevented) return;
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+        return;
+      }
+      event.preventDefault();
+      const title = (link.textContent || "").trim();
+      openPdfOverlay(resolvedUrl, title);
+    });
+  }
+
   function scrollToAnchor(anchor) {
     const scrollViewerToTop = () => {
       if (typeof viewerEl.scrollTo === "function") {
@@ -667,6 +787,7 @@ window.createViewerComponent = function createViewerComponent(options) {
 
   function renderEmptyToc(message = "") {
     if (!tocNavEl) return;
+    tocNavEl.classList.remove("toc-all-second-level");
     tocNavEl.innerHTML = message ? `<p class="hint">${escapeHtml(message)}</p>` : "";
   }
 
@@ -707,8 +828,14 @@ window.createViewerComponent = function createViewerComponent(options) {
     const usedIds = new Set();
     const items = [];
 
+    let skippedFirstH1 = false;
+
     for (const heading of headings) {
       const level = Number(heading.tagName.slice(1));
+      if (level === 1 && !skippedFirstH1) {
+        skippedFirstH1 = true;
+        continue;
+      }
       const title = (heading.textContent || "").trim();
       if (!title) continue;
 
@@ -749,6 +876,8 @@ window.createViewerComponent = function createViewerComponent(options) {
       list.appendChild(li);
     }
 
+    const allSecondLevel = items.every((item) => item.level === 2);
+    tocNavEl.classList.toggle("toc-all-second-level", allSecondLevel);
     tocNavEl.innerHTML = "";
     tocNavEl.appendChild(list);
     window.requestAnimationFrame(updateTocTooltips);
@@ -1057,11 +1186,8 @@ window.createViewerComponent = function createViewerComponent(options) {
       }
 
       if (/^(https?:|mailto:|data:|blob:|\/\/)/i.test(href)) {
-        if (isRawGitHubUrl(href)) {
-          link.href = "#";
-          link.addEventListener("click", (event) => {
-            event.preventDefault();
-          });
+        if (isPdfUrl(href)) {
+          wirePdfLink(link, href);
           continue;
         }
         if (isLikelyVideoLink(link, href)) {
@@ -1103,11 +1229,8 @@ window.createViewerComponent = function createViewerComponent(options) {
           replaceLinkWithVideo(link, resolvedUrl);
           continue;
         }
-        if (isRawGitHubUrl(resolvedUrl)) {
-          link.href = "#";
-          link.addEventListener("click", (event) => {
-            event.preventDefault();
-          });
+        if (isPdfUrl(href) || isPdfUrl(resolvedUrl)) {
+          wirePdfLink(link, resolvedUrl);
           continue;
         }
         link.href = resolvedUrl;
@@ -1173,12 +1296,24 @@ window.createViewerComponent = function createViewerComponent(options) {
     return hasBottomBorder;
   }
 
+  function expandTreeToActivePath(path) {
+    if (!path) return;
+    const parts = path.split("/");
+    let current = "";
+    for (let i = 0; i < parts.length - 1; i += 1) {
+      current = current ? `${current}/${parts[i]}` : parts[i];
+      state.collapsedPaths.delete(current);
+    }
+  }
+
   async function openFile(path, anchor = "", options = {}) {
     const { historyMode = "replace" } = options;
+    closePdfOverlay();
     pendingLoads += 1;
     setPageLoading(true);
 
     state.activePath = path;
+    expandTreeToActivePath(path);
     renderTree(openFile);
 
     const { source } = state;
