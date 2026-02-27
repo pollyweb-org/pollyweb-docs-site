@@ -14,8 +14,8 @@
 }
 
 .site-context-inner {
-  min-height: 74px;
-  padding: 14px 28px;
+  min-height: 0;
+  padding: 6.4px 10px 6.4px 8px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -32,8 +32,8 @@
 }
 
 .site-brand-icon {
-  width: 40px;
-  height: 40px;
+  width: 28px;
+  height: 28px;
   border-radius: 9px;
   object-fit: cover;
   display: block;
@@ -49,14 +49,16 @@
 
 .site-brand-label {
   font-family: "Bricolage Grotesque", "DM Sans", sans-serif;
-  font-size: 38px;
-  font-size: clamp(22px, 2.15vw, 36px);
+  font-size: 22.4px;
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.01em;
 }
 
 .site-context-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 11px;
   line-height: 1;
   text-transform: uppercase;
@@ -111,9 +113,7 @@
 }
 
 .site-context-accent {
-  height: 10px;
-  background: linear-gradient(90deg, rgba(6, 25, 53, 0.9) 0%, rgba(16, 53, 98, 0.95) 36%, rgba(8, 28, 56, 0.92) 100%);
-  border-bottom: 1px solid rgba(51, 110, 193, 0.26);
+  display: none;
 }
 
 .workspace {
@@ -218,7 +218,7 @@ body.resizing-panels * {
 
 #viewerTitle {
   margin: 0;
-  padding: 16px 260px 20px 52px;
+  padding: 16px 260px 16px 52px;
   font-size: 14px;
   line-height: 1;
   color: var(--muted);
@@ -311,11 +311,20 @@ body.resizing-panels * {
   opacity: 1;
 }
 
+.site-context-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.repo-home-menu-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.site-theme-btn,
 .repo-home-btn {
-  position: absolute;
-  top: 8px;
-  right: 48px;
-  z-index: 4;
+  position: relative;
   width: 30px;
   height: 30px;
   padding: 0;
@@ -326,7 +335,13 @@ body.resizing-panels * {
   border-radius: 8px;
   background: var(--control-bg);
   color: var(--text);
-  text-decoration: none;
+  cursor: pointer;
+}
+
+.site-theme-btn svg {
+  width: 14px;
+  height: 14px;
+  display: block;
 }
 
 .repo-home-btn svg {
@@ -335,15 +350,18 @@ body.resizing-panels * {
   display: block;
 }
 
+.site-theme-btn:hover,
 .repo-home-btn:hover {
   background: var(--tree-hover);
 }
 
+.site-theme-btn:focus-visible,
 .repo-home-btn:focus-visible {
   outline: 1px solid var(--accent);
   outline-offset: 0;
 }
 
+.site-theme-btn::after,
 .repo-home-btn::after {
   content: attr(data-tooltip);
   position: absolute;
@@ -363,15 +381,57 @@ body.resizing-panels * {
   transition: opacity 120ms ease;
 }
 
+.site-theme-btn:hover::after,
+.site-theme-btn:focus-visible::after,
 .repo-home-btn:hover::after,
 .repo-home-btn:focus-visible::after {
   opacity: 1;
 }
 
+.repo-home-menu-wrap.open .repo-home-btn::after {
+  opacity: 0;
+}
+
+.repo-home-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 220px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+  z-index: 12;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.repo-home-menu-wrap.open .repo-home-menu {
+  display: flex;
+}
+
+.repo-home-menu a {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 6px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.repo-home-menu a:hover,
+.repo-home-menu a:focus-visible {
+  background: var(--tree-hover);
+  outline: none;
+}
+
 .meta {
   position: absolute;
   top: 8px;
-  right: 86px;
+  right: 10px;
   padding: 0;
   border: 0;
   font-size: 12px;
@@ -566,19 +626,19 @@ body.resizing-panels * {
 }
 
 .repo-home-btn::after {
-  right: -38px;
+  right: 0;
 }
 
 .meta-refresh-btn::after {
-  right: -76px;
+  right: 0;
 }
 
 .meta-edit-btn::after {
-  right: -76px;
+  right: 0;
 }
 
 .meta-expand-btn::after {
-  right: -76px;
+  right: 0;
 }
 
 .meta-error-icon {
@@ -610,14 +670,14 @@ body.resizing-panels * {
 
 @media (max-width: 900px) {
   .site-context-inner {
-    min-height: 56px;
-    padding: 10px 12px;
+    min-height: 0;
+    padding: 8px;
     gap: 10px;
   }
 
   .site-brand-icon {
-    width: 30px;
-    height: 30px;
+    width: 21px;
+    height: 21px;
   }
 
   .site-brand-logo {
@@ -626,7 +686,7 @@ body.resizing-panels * {
   }
 
   .site-brand-label {
-    font-size: 24px;
+    font-size: 16.8px;
   }
 
   .site-context-badge {
@@ -675,12 +735,8 @@ body.resizing-panels * {
     right: 8px;
   }
 
-  .repo-home-btn {
-    right: 46px;
-  }
-
   .meta {
-    right: 84px;
+    right: 8px;
   }
 
   .panel-divider {

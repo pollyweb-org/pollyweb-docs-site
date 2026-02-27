@@ -589,6 +589,43 @@
   border-top: 1px solid var(--border);
 }
 
+.viewer-next-nav {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.viewer-next-nav.viewer-next-nav-no-divider {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.viewer-next-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.viewer-next-kicker {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.viewer-next-title {
+  font-weight: 400;
+}
+
+.viewer-next-arrow {
+  font-size: 16px;
+  line-height: 1;
+}
+
 @media (max-width: 900px) {
   .toc-panel {
     display: none;

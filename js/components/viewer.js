@@ -79,6 +79,19 @@ window.createViewerComponent = function createViewerComponent(options) {
     return /^readme(\.[^/.]+)?$/i.test(name);
   }
 
+  function getPageTitle(path) {
+    const parts = path.split("/");
+    const fileName = parts[parts.length - 1] || path;
+    if (parts.length === 1 && isReadmeFile(fileName)) {
+      return "Home";
+    }
+    if (isReadmeFile(fileName) && parts.length > 1) {
+      const parent = parts[parts.length - 2] || "";
+      return formatBreadcrumbLabel(parent, false);
+    }
+    return formatBreadcrumbLabel(fileName, true);
+  }
+
   function createHomeIcon() {
     const span = document.createElement("span");
     span.className = "breadcrumb-home-icon";
@@ -920,6 +933,62 @@ window.createViewerComponent = function createViewerComponent(options) {
     }
   }
 
+  function renderNextPageNav(currentPath, onOpenFile) {
+    const files = state.files;
+    const currentIndex = files.indexOf(currentPath);
+    if (currentIndex < 0) return;
+    const nextPath = files[currentIndex + 1];
+    if (!nextPath) return;
+
+    const nav = document.createElement("nav");
+    nav.className = "viewer-next-nav";
+    nav.setAttribute("aria-label", "Next page");
+    if (contentEndsWithDivider(viewerEl)) {
+      nav.classList.add("viewer-next-nav-no-divider");
+    }
+
+    const link = document.createElement("a");
+    link.className = "viewer-next-link";
+    link.href = `?page=${encodeURIComponent(nextPath)}`;
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+      onOpenFile(nextPath, "", { historyMode: "push" });
+    });
+
+    const kicker = document.createElement("span");
+    kicker.className = "viewer-next-kicker";
+    kicker.textContent = "Next page";
+
+    const title = document.createElement("span");
+    title.className = "viewer-next-title";
+    title.textContent = getPageTitle(nextPath);
+
+    const arrow = document.createElement("span");
+    arrow.className = "viewer-next-arrow";
+    arrow.textContent = "→";
+
+    link.appendChild(kicker);
+    link.appendChild(title);
+    link.appendChild(arrow);
+    nav.appendChild(link);
+    viewerEl.appendChild(nav);
+  }
+
+  function contentEndsWithDivider(rootEl) {
+    const lastEl = rootEl.lastElementChild;
+    if (!lastEl) return false;
+    if (lastEl.tagName === "HR") return true;
+
+    const style = window.getComputedStyle(lastEl);
+    const borderBottomWidth = parseFloat(style.borderBottomWidth || "0");
+    const hasBottomBorder =
+      borderBottomWidth > 0 &&
+      style.borderBottomStyle !== "none" &&
+      style.borderBottomColor !== "transparent";
+
+    return hasBottomBorder;
+  }
+
   async function openFile(path, anchor = "", options = {}) {
     const { historyMode = "replace" } = options;
     pendingLoads += 1;
@@ -950,6 +1019,7 @@ window.createViewerComponent = function createViewerComponent(options) {
       viewerEl.innerHTML = window.marked.parse(text);
       sanitizeRenderedHtml(viewerEl);
       processRenderedContent(path, openFile);
+      renderNextPageNav(path, openFile);
       updateTableOfContents(path);
       scrollToAnchor(anchor || state.initialAnchor);
       const activeAnchor = anchor || state.initialAnchor;

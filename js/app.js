@@ -12,7 +12,11 @@
   const contentLayoutEl = document.querySelector(".content-layout");
   const tocPanelEl = document.getElementById("tocPanel");
   const tocDividerEl = document.getElementById("tocDivider");
+  const repoHomeMenuWrapEl = document.getElementById("repoHomeMenuWrap");
   const repoHomeBtnEl = document.getElementById("repoHomeBtn");
+  const repoHomeMenuEl = document.getElementById("repoHomeMenu");
+  const repoDocsLinkEl = document.getElementById("repoDocsLink");
+  const repoSiteLinkEl = document.getElementById("repoSiteLink");
   const THEME_STORAGE_KEY = "pollyweb-docs-theme";
   const TREE_PANEL_COLLAPSED_STORAGE_KEY = "pollyweb-docs-tree-collapsed";
   const TOC_PANEL_COLLAPSED_STORAGE_KEY = "pollyweb-docs-toc-collapsed";
@@ -62,8 +66,49 @@
   const THEME_DARK_ICON =
     '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M10.87 2.38a5.88 5.88 0 1 0 2.75 10.9 5.5 5.5 0 1 1-2.75-10.9Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
-  if (repoHomeBtnEl) {
-    repoHomeBtnEl.href = REPO_HOME_URL;
+  if (repoDocsLinkEl) {
+    repoDocsLinkEl.href = STATIC_SOURCE_URL;
+  }
+
+  if (repoSiteLinkEl) {
+    repoSiteLinkEl.href = REPO_HOME_URL;
+  }
+
+  function initRepoMenu() {
+    if (!repoHomeMenuWrapEl || !repoHomeBtnEl || !repoHomeMenuEl) return;
+    let isMenuOpen = false;
+
+    function setMenuOpen(open) {
+      isMenuOpen = open;
+      repoHomeMenuWrapEl.classList.toggle("open", open);
+      repoHomeBtnEl.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+
+    repoHomeBtnEl.addEventListener("click", (event) => {
+      event.preventDefault();
+      setMenuOpen(!isMenuOpen);
+    });
+
+    repoHomeMenuEl.addEventListener("click", (event) => {
+      const target = event.target && typeof event.target.closest === "function"
+        ? event.target.closest('a[role="menuitem"]')
+        : null;
+      if (!target) return;
+      setMenuOpen(false);
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!isMenuOpen) return;
+      if (!repoHomeMenuWrapEl.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || !isMenuOpen) return;
+      setMenuOpen(false);
+      repoHomeBtnEl.focus();
+    });
   }
 
   function readStoredTheme() {
@@ -731,6 +776,8 @@
       persistTheme(nextTheme);
     });
   }
+
+  initRepoMenu();
 
   if (dom.metaEl) {
     dom.metaEl.addEventListener("click", (event) => {
