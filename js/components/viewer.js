@@ -1,5 +1,18 @@
 window.createViewerComponent = function createViewerComponent(options) {
-  const { state, viewerEl, viewerTitleEl, tocNavEl, metaEl, setStatus, toRawUrl, fetchRawFile, clearPageCache, renderTree } = options;
+  const {
+    state,
+    viewerEl,
+    viewerTitleEl,
+    tocNavEl,
+    metaEl,
+    setStatus,
+    toRawUrl,
+    fetchRawFile,
+    clearPageCache,
+    clearTreeCache,
+    renderTree,
+    reloadRepository,
+  } = options;
   const { dirname, escapeHtml, normalizePath, splitRef, extractPageToken, toSafeSlug } = window.PortalUtils;
   const tocPanelEl = tocNavEl ? tocNavEl.closest(".toc-panel") : null;
   const viewerWrapEl = viewerEl.closest(".viewer-wrap");
@@ -66,10 +79,15 @@ window.createViewerComponent = function createViewerComponent(options) {
     const refreshBtn = metaEl.querySelector(".meta-refresh-btn");
     if (!refreshBtn) return;
 
-    refreshBtn.addEventListener("click", () => {
+    refreshBtn.addEventListener("click", async () => {
       const { source } = state;
       if (!source) return;
       clearPageCache(source, path);
+      clearTreeCache(source);
+      if (typeof reloadRepository === "function") {
+        await reloadRepository({ forceRefreshTree: true });
+        return;
+      }
       void openFile(path, anchor, { historyMode: "replace" });
     });
   }

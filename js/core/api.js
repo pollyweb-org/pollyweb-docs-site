@@ -74,20 +74,27 @@ async function resolveSource(input) {
   };
 }
 
-async function fetchTree(source) {
+async function fetchTree(source, options = {}) {
   const { owner, repo, branch } = source;
-  const endpoint = `https://api.github.com/repos/${owner}/${repo}/git/trees/${encodeURIComponent(branch)}?recursive=1`;
+  const { forceRefresh = false } = options;
+  const cacheBust = forceRefresh ? Date.now() : 0;
+  const endpoint = forceRefresh
+    ? `https://api.github.com/repos/${owner}/${repo}/git/trees/${encodeURIComponent(branch)}?recursive=1&refresh=${cacheBust}`
+    : `https://api.github.com/repos/${owner}/${repo}/git/trees/${encodeURIComponent(branch)}?recursive=1`;
   const fetchCached = getCache();
   let data;
   try {
     const result = await fetchCached(endpoint, {
-      cacheKey: `repo-tree:${owner}/${repo}@${branch}`,
+      cacheKey: forceRefresh
+        ? `repo-tree-force:${owner}/${repo}@${branch}:${cacheBust}`
+        : `repo-tree:${owner}/${repo}@${branch}`,
       headers: SOURCE_ACCEPT_HEADER,
       responseType: "json",
-      ttlMs: 20 * 60 * 1000,
+      ttlMs: 1 * 60 * 1000,
       negativeTtlMs: 2 * 60 * 1000,
       minRequestIntervalMs: 15 * 1000,
-      staleWhileRevalidate: true,
+      staleWhileRevalidate: !forceRefresh,
+      persistent: !forceRefresh,
     });
     data = result.data;
   } catch (err) {
@@ -186,6 +193,12 @@ function clearPageCache(source, path) {
   cache.deleteCached(getDocsPageCacheKey(source, path));
 }
 
+function clearTreeCache(source) {
+  if (!source || !source.owner || !source.repo || !source.branch) return;
+  const cache = getCacheController();
+  cache.deleteCached(`repo-tree:${source.owner}/${source.repo}@${source.branch}`);
+}
+
 async function fetchRawFile(source, path) {
   return fetchPageViaPollywebApi(source, path);
 }
@@ -197,5 +210,6 @@ window.PortalApi = {
   fetchRawFile,
   fetchPageViaPollywebApi,
   clearPageCache,
+  clearTreeCache,
   toRawUrl,
 };

@@ -4,7 +4,7 @@
   const state = window.PortalState;
   const dom = window.PortalDom;
   const { escapeHtml, isMarkdown, buildPageTokenMaps, extractPageToken } = window.PortalUtils;
-  const { fetchTree, resolveSource, fetchRawFile, clearPageCache, toRawUrl } = window.PortalApi;
+  const { fetchTree, resolveSource, fetchRawFile, clearPageCache, clearTreeCache, toRawUrl } = window.PortalApi;
   const setStatus = window.setPortalStatus;
   const workspaceEl = document.getElementById("workspace");
   const treePanelEl = document.getElementById("treePanel");
@@ -45,8 +45,10 @@
     setStatus,
     fetchRawFile,
     clearPageCache,
+    clearTreeCache,
     toRawUrl,
     renderTree: tree.renderTree,
+    reloadRepository: loadRepository,
   });
 
   const HIDE_ICON =
@@ -648,7 +650,7 @@
     setStatus(error.message, true);
   }
 
-  async function loadSourceWithRetry() {
+  async function loadSourceWithRetry(options = {}) {
     if (getTestMode() === "force-source-error") {
       throw new Error("Source API error (unknown): Failed to fetch (forced test mode).");
     }
@@ -664,7 +666,7 @@
       try {
         const source = await resolveSource(STATIC_SOURCE_URL);
         setStatus(`Fetching tree for ${source.owner}/${source.repo}@${source.branch} ...`);
-        const treeResult = await fetchTree(source);
+        const treeResult = await fetchTree(source, { forceRefresh: Boolean(options.forceRefreshTree) });
         return { source, treeResult };
       } catch (error) {
         if (!shouldRetrySourceLoad(error) || attempt === maxRetries) {
@@ -684,10 +686,10 @@
     throw new Error("Repository load retries exhausted.");
   }
 
-  async function loadRepository() {
+  async function loadRepository(options = {}) {
     try {
       dom.viewerEl.innerHTML = "";
-      const { source, treeResult } = await loadSourceWithRetry();
+      const { source, treeResult } = await loadSourceWithRetry(options);
       state.source = source;
       let visibilitySettings = { show: [], hide: [] };
       try {

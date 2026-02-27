@@ -25,3 +25,6 @@ GitHub Icon:
   - shows a menu when clicked
   - menu has an option to open the GitHub pollyweb-docs repository in a new tab
   - menu has an option to copy the GitHub pollyweb-docs-site repository in a new tab
+
+On This Page:
+  - hide the first h1 entry in the right panel when it repeats the page title
