@@ -134,6 +134,34 @@ window.createViewerComponent = function createViewerComponent(options) {
     button.setAttribute("aria-label", tooltip);
   }
 
+  function getOrCreateCopyTooltip() {
+    let tooltip = document.getElementById("copyTooltip");
+    if (!tooltip) {
+      tooltip = document.createElement("div");
+      tooltip.id = "copyTooltip";
+      tooltip.className = "copy-tooltip";
+      tooltip.setAttribute("role", "tooltip");
+      document.body.appendChild(tooltip);
+    }
+    return tooltip;
+  }
+
+  function showCopyTooltip(button) {
+    const tooltip = getOrCreateCopyTooltip();
+    const rect = button.getBoundingClientRect();
+    const text = button.getAttribute("data-tooltip") || "Copy file path";
+    tooltip.textContent = text;
+    tooltip.classList.add("visible");
+    tooltip.style.left = `${Math.round(rect.left + rect.width / 2)}px`;
+    tooltip.style.top = `${Math.round(rect.bottom + 8)}px`;
+  }
+
+  function hideCopyTooltip() {
+    const tooltip = document.getElementById("copyTooltip");
+    if (!tooltip) return;
+    tooltip.classList.remove("visible");
+  }
+
   function showCopyConfirmation(button, copied) {
     const titleEl = button.closest("#viewerTitle");
     if (!titleEl) return;
@@ -165,10 +193,12 @@ window.createViewerComponent = function createViewerComponent(options) {
     button.classList.toggle("copied", copied);
     button.classList.toggle("copy-failed", !copied);
     showCopyConfirmation(button, copied);
+    showCopyTooltip(button);
     window.clearTimeout(button._copyResetTimer);
     button._copyResetTimer = window.setTimeout(() => {
       button.classList.remove("copied", "copy-failed");
       updateCopyPathButtonTooltip(button, "Copy file path");
+      hideCopyTooltip();
     }, copied ? 1500 : 2000);
   }
 
@@ -214,6 +244,10 @@ window.createViewerComponent = function createViewerComponent(options) {
     copyBtn.className = "meta-copy-btn title-copy-btn";
     updateCopyPathButtonTooltip(copyBtn, "Copy file path");
     copyBtn.innerHTML = '<span class="breadcrumb-copy-icon"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="2.5" width="8" height="9" rx="1.6" ry="1.6" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="2.5" y="5.5" width="8" height="8" rx="1.6" ry="1.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></span>';
+    copyBtn.addEventListener("mouseenter", () => showCopyTooltip(copyBtn));
+    copyBtn.addEventListener("mouseleave", hideCopyTooltip);
+    copyBtn.addEventListener("focus", () => showCopyTooltip(copyBtn));
+    copyBtn.addEventListener("blur", hideCopyTooltip);
     copyBtn.addEventListener("click", () => {
       void handleCopyPath(path, copyBtn);
     });

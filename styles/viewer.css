@@ -363,8 +363,9 @@
   gap: 6px;
   flex-wrap: nowrap;
   white-space: nowrap;
-  overflow-x: hidden;
-  overflow-y: visible;
+  overflow: visible;
+  text-overflow: ellipsis;
+  clip-path: inset(0 0 -100px 0);
   text-transform: none;
   letter-spacing: 0.01em;
   font-weight: 400;

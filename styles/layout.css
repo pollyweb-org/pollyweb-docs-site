@@ -489,6 +489,7 @@ body.resizing-panels * {
   position: absolute;
   top: 8px;
   left: 46px;
+  z-index: 20;
 }
 
 .meta-edit-btn svg {
@@ -516,23 +517,7 @@ body.resizing-panels * {
 }
 
 .meta-copy-btn::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  left: 50%;
-  top: calc(100% + 8px);
-  transform: translateX(-50%);
-  z-index: 10;
-  pointer-events: none;
-  opacity: 0;
-  white-space: nowrap;
-  font-size: 12px;
-  line-height: 1;
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid var(--line);
-  background: var(--tooltip-bg);
-  color: var(--tooltip-text);
-  transition: opacity 120ms ease;
+  content: none;
 }
 
 .meta-edit-btn::after {
@@ -552,13 +537,6 @@ body.resizing-panels * {
   background: var(--tooltip-bg);
   color: var(--tooltip-text);
   transition: opacity 120ms ease;
-}
-
-.meta-copy-btn:hover::after,
-.meta-copy-btn:focus-visible::after,
-.meta-copy-btn.copied::after,
-.meta-copy-btn.copy-failed::after {
-  opacity: 1;
 }
 
 .meta-edit-btn:hover::after,
@@ -703,7 +681,7 @@ body.resizing-panels * {
 
 .meta-copy-btn::after {
   right: auto;
-  left: 50%;
+  left: auto;
 }
 
 .meta-refresh-btn::after {
@@ -761,6 +739,27 @@ body.resizing-panels * {
   border-color: rgba(255, 120, 108, 0.45);
   background: rgba(49, 20, 20, 0.96);
   color: #ffd1cc;
+}
+
+.copy-tooltip {
+  position: fixed;
+  z-index: 2000;
+  transform: translateX(-50%);
+  pointer-events: none;
+  opacity: 0;
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 1;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--tooltip-bg);
+  color: var(--tooltip-text);
+  transition: opacity 120ms ease;
+}
+
+.copy-tooltip.visible {
+  opacity: 1;
 }
 
 @keyframes page-load-bar {
