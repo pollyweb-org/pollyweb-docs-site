@@ -9,6 +9,8 @@
 }
 
 .site-context-bar {
+  position: relative;
+  z-index: 30;
   background: var(--topbar-bg);
   border-bottom: 1px solid var(--topbar-border);
 }
@@ -233,6 +235,13 @@ body.resizing-panels * {
   background: var(--title-bg);
 }
 
+#viewerTitle.breadcrumb-compact {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  min-height: 40px;
+  line-height: 1.1;
+}
+
 .sidebar-toggle {
   position: absolute;
   top: 8px;
@@ -330,6 +339,7 @@ body.resizing-panels * {
 .site-theme-btn,
 .repo-home-btn {
   position: relative;
+  z-index: 2;
   width: 30px;
   height: 30px;
   padding: 0;
@@ -373,6 +383,7 @@ body.resizing-panels * {
   right: 0;
   top: calc(100% + 8px);
   transform: none;
+  z-index: 2000;
   pointer-events: none;
   opacity: 0;
   white-space: nowrap;
@@ -490,6 +501,10 @@ body.resizing-panels * {
   top: 8px;
   left: 46px;
   z-index: 20;
+}
+
+#viewerTitle.breadcrumb-compact .title-copy-btn {
+  top: 6px;
 }
 
 .meta-edit-btn svg {
