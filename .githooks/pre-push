@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+set -eu
+
+if [ "${SKIP_SECURITY_PUSH_CHECK:-0}" = "1" ]; then
+  echo "Skipping security push check (SKIP_SECURITY_PUSH_CHECK=1)."
+  exit 0
+fi
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+echo "Running security check before push..."
+npm run --silent security:check

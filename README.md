@@ -8,6 +8,14 @@ This project uses `vitest` for unit tests.
 - Run tests once: `npm test`
 - Run tests in watch mode: `npm run test:watch`
 
+## Block push when security issues are pending
+
+This repo includes a local `pre-push` hook that blocks `git push` if `npm audit` reports unresolved vulnerabilities.
+
+- Enable repo hooks (once per clone): `npm run hooks:install`
+- Run the check manually: `npm run security:check`
+- Emergency override (not recommended): `SKIP_SECURITY_PUSH_CHECK=1 git push`
+
 ## Caching and `api.pollyweb.org` dependency
 
 This app uses `window.PortalCache` (`js/core/cache.js`) for all HTTP reads. Cache entries are kept:
