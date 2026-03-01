@@ -354,7 +354,7 @@ window.createViewerComponent = function createViewerComponent(options) {
         if (crumb.targetPath === path) {
           button.classList.add("active");
         }
-        button.addEventListener("click", () => onOpenFile(crumb.targetPath));
+        button.addEventListener("click", () => onOpenFile(crumb.targetPath, "", { historyMode: "push" }));
         viewerTitleEl.appendChild(button);
       } else {
         const text = document.createElement("span");
@@ -888,7 +888,7 @@ window.createViewerComponent = function createViewerComponent(options) {
       link.addEventListener("click", (event) => {
         event.preventDefault();
         scrollToAnchor(item.id);
-        updateLocation(state.activePath || currentVisiblePath, item.id);
+        updateLocation(state.activePath || currentVisiblePath, item.id, { historyMode: "push" });
       });
       li.appendChild(link);
       list.appendChild(li);

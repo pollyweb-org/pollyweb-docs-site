@@ -84,7 +84,7 @@ window.createTreeComponent = function createTreeComponent(state, treeEl) {
     if (state.activePath === fullPath) {
       btn.classList.add("active");
     }
-    btn.addEventListener("click", () => onOpenFile(fullPath));
+    btn.addEventListener("click", () => onOpenFile(fullPath, "", { historyMode: "push" }));
     return btn;
   }
 
