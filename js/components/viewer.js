@@ -126,6 +126,25 @@ window.createViewerComponent = function createViewerComponent(options) {
     return /^readme(\.[^/.]+)?$/i.test(name);
   }
 
+  function isSingleEmojiFolderName(name) {
+    const value = String(name || "").trim();
+    if (!value) return false;
+    if (!/\p{Extended_Pictographic}/u.test(value)) return false;
+
+    if (typeof Intl !== "undefined" && typeof Intl.Segmenter === "function") {
+      const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+      const segments = [...segmenter.segment(value)];
+      return segments.length === 1;
+    }
+
+    const normalized = value.replace(/[\uFE0E\uFE0F\u200D]/g, "");
+    return [...normalized].length === 1;
+  }
+
+  function isLiftedFolderName(name) {
+    return name === "$" || isSingleEmojiFolderName(name);
+  }
+
   function getPageTitle(path) {
     const parts = path.split("/");
     const fileName = parts[parts.length - 1] || path;
@@ -306,6 +325,9 @@ window.createViewerComponent = function createViewerComponent(options) {
       }
       const currentPath = parts.slice(0, i + 1).join("/");
       const isFile = i === parts.length - 1;
+      if (!isFile && isLiftedFolderName(parts[i])) {
+        continue;
+      }
       const isTopLevelReadme = isFile && parts.length === 1 && isReadmeFile(parts[i]);
       if (isTopLevelReadme) {
         continue;

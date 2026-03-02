@@ -43,6 +43,25 @@ function formatFolderLabel(name) {
   return stripLeadingNumber(name);
 }
 
+function isSingleEmojiFolderName(name) {
+  const value = String(name || "").trim();
+  if (!value) return false;
+  if (!/\p{Extended_Pictographic}/u.test(value)) return false;
+
+  if (typeof Intl !== "undefined" && typeof Intl.Segmenter === "function") {
+    const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+    const segments = [...segmenter.segment(value)];
+    return segments.length === 1;
+  }
+
+  const normalized = value.replace(/[\uFE0E\uFE0F\u200D]/g, "");
+  return [...normalized].length === 1;
+}
+
+function isLiftedFolderName(name) {
+  return name === "$" || isSingleEmojiFolderName(name);
+}
+
 function isReadmeFile(name) {
   return /^readme(\.[^/.]+)?$/i.test(name);
 }
@@ -107,7 +126,7 @@ window.createTreeComponent = function createTreeComponent(state, treeEl) {
       const isDir = node[name] !== null;
 
       if (isDir) {
-        if (name === "$") {
+        if (isLiftedFolderName(name)) {
           const lifted = renderTreeNode(node[name], fullPath, onOpenFile);
           for (const child of Array.from(lifted.children)) {
             ul.appendChild(child);
