@@ -12,5 +12,9 @@ Show:
   - /1 🎯 Mission/*
   - /2 🏔️ Landscape/*/*
   - /4 ⚙️ Solution/40 👥 Domains/*/*
+  - /4 ⚙️ Solution/20 🧑‍🦰 UI/*/*
+  - /4 ⚙️ Solution/25 🔆 Locators/*/*
+  - /4 ⚙️ Solution/30 🧩 Data/*/*
+  - /4 ⚙️ Solution/35 💬 Chats/*/*
 Hide: 
   - /4 ⚙️ Solution/40 👥 Domains/👥🧩 Domain schemas/🧩 DOMAIN.md
