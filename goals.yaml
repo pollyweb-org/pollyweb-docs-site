@@ -38,3 +38,8 @@ Links:
   - absolute links should be resolved based on the root of the documentation directory
   - if a link points to a non-existent or non-visible file, show a warning message when clicked
   - when clicking on a link, add it to the browser history so that the back button works as expected
+
+Mobile Content Scroll:
+  - on small screens, the central content area must be vertically scrollable by touch drag
+  - keep the content pane in a bounded-height layout so scrolling happens inside the viewer, not the page body
+  - do not block native vertical swipe scrolling in the viewer on mobile

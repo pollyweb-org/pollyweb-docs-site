@@ -827,7 +827,8 @@ body.resizing-panels * {
   }
 
   .workspace {
-    display: block;
+    display: flex;
+    min-height: 0;
   }
 
   .tree-panel {
@@ -835,11 +836,17 @@ body.resizing-panels * {
   }
 
   .content-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
     border-left: 1px solid var(--border);
   }
 
   .content-layout {
-    display: block;
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
   }
 
   #viewerTitle {
