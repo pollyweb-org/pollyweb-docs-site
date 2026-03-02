@@ -831,10 +831,7 @@ body.resizing-panels * {
   }
 
   .tree-panel {
-    width: 100%;
-    max-width: none;
-    min-width: 0;
-    border-right: 1px solid var(--border);
+    display: none;
   }
 
   .content-panel {
@@ -846,8 +843,12 @@ body.resizing-panels * {
   }
 
   #viewerTitle {
-    padding-left: 90px;
+    padding-left: 46px;
     padding-right: 190px;
+  }
+
+  #viewerTitle .title-copy-btn {
+    left: 8px;
   }
 
   .theme-toggle-btn {
@@ -862,7 +863,9 @@ body.resizing-panels * {
     display: none;
   }
 
-  .toc-toggle-btn {
+  .tree-toggle-btn,
+  .toc-toggle-btn,
+  .meta-expand-btn {
     display: none;
   }
 }
