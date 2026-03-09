@@ -1,3 +1,7 @@
 .codex-artifacts
 node_modules
 coverage
+openai-checkout-chatgpt.mp4
+**/openai-checkout-chatgpt.mp4
+video_4m14s.webm
+yt_source.webm
