@@ -1007,13 +1007,22 @@ window.createViewerComponent = function createViewerComponent(options) {
           const key = rawKey.trimEnd();
           const keySuffix = rawKey.slice(key.length);
           const hasValue = rawValue.trim().length > 0;
+          const inlineCommentMatch = hasValue ? rawValue.match(/^(\s*[^#\n]*?)(\s+#.*)$/) : null;
+          const valueMarkup = !hasValue
+            ? ""
+            : inlineCommentMatch
+              ? [
+                  `<span class="yaml-value">${escapeHtml(inlineCommentMatch[1])}</span>`,
+                  `<span class="yaml-comment">${escapeHtml(inlineCommentMatch[2])}</span>`,
+                ].join("")
+              : `<span class="yaml-value">${escapeHtml(rawValue)}</span>`;
 
           return [
             escapeHtml(prefix),
             `<span class="yaml-key">${escapeHtml(key)}</span>`,
             escapeHtml(keySuffix),
             escapeHtml(separator),
-            hasValue ? `<span class="yaml-value">${escapeHtml(rawValue)}</span>` : "",
+            valueMarkup,
           ].join("");
         })
         .join("\n");
