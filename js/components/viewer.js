@@ -998,6 +998,20 @@ window.createViewerComponent = function createViewerComponent(options) {
             return `<span class="yaml-comment">${escapeHtml(line)}</span>`;
           }
 
+          const listItemMatch = line.match(/^(\s*-\s+)(.*)$/);
+          if (listItemMatch) {
+            const [, prefix, rawItemValue] = listItemMatch;
+            const inlineCommentMatch = rawItemValue.match(/^(.*?)(\s*#.*)$/);
+            const itemMarkup = inlineCommentMatch
+              ? [
+                  `<span class="yaml-value">${escapeHtml(inlineCommentMatch[1])}</span>`,
+                  `<span class="yaml-comment">${escapeHtml(inlineCommentMatch[2])}</span>`,
+                ].join("")
+              : `<span class="yaml-value">${escapeHtml(rawItemValue)}</span>`;
+
+            return `${escapeHtml(prefix)}${itemMarkup}`;
+          }
+
           const keyValueMatch = line.match(/^(\s*-?\s*)([^:#\n][^:\n]*)(\s*:\s*)(.*)$/);
           if (!keyValueMatch) {
             return escapeHtml(line);
@@ -1007,7 +1021,7 @@ window.createViewerComponent = function createViewerComponent(options) {
           const key = rawKey.trimEnd();
           const keySuffix = rawKey.slice(key.length);
           const hasValue = rawValue.trim().length > 0;
-          const inlineCommentMatch = hasValue ? rawValue.match(/^(\s*[^#\n]*?)(\s+#.*)$/) : null;
+          const inlineCommentMatch = hasValue ? rawValue.match(/^(.*?)(\s*#.*)$/) : null;
           const valueMarkup = !hasValue
             ? ""
             : inlineCommentMatch
